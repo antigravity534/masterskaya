@@ -184,7 +184,10 @@
                     this.services = data.services || [];
                     this.bookedCounts = data.bookedCounts || {};
                     this.maxBookings = data.maxBookings ?? 1;
-                    
+                    // ОТЛАДКА: Посмотрите это в консоли браузера (F12)
+                    console.log("Сервер считает, что сегодня:", data.serverToday);
+                    console.log("Занятые слоты:", data.bookedCounts);
+                    console.log("Лимит записей на слот:", this.maxBookings);
                     this.loading = false;
                 } catch (e) {
                     alert("Ошибка загрузки данных. Проверьте соединение и права доступа.");
@@ -259,4 +262,5 @@
 
 </body>
 </html>
+
 
