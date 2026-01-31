@@ -183,7 +183,7 @@
                     
                     this.services = data.services || [];
                     this.bookedCounts = data.bookedCounts || {};
-                    this.maxBookings = data.maxBookings ?? 1;
+                    this.maxBookings = parseInt(data.maxBookings);
                     // ОТЛАДКА: Посмотрите это в консоли браузера (F12)
                     console.log("Сервер считает, что сегодня:", data.serverToday);
                     console.log("Занятые слоты:", data.bookedCounts);
@@ -262,5 +262,6 @@
 
 </body>
 </html>
+
 
 
