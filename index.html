@@ -3,128 +3,80 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мастерская: Каталог услуг</title>
-    <!-- Подключаем Telegram SDK и Vue.js -->
+    <title>Мастерская: Каталог</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         :root {
-            --tg-theme-bg-color: #ffffff;
-            --tg-theme-text-color: #000000;
+            --tg-theme-bg-color: #fff;
+            --tg-theme-text-color: #000;
             --tg-theme-button-color: #248bed;
-            --tg-theme-button-text-color: #ffffff;
-            --tg-theme-secondary-bg-color: #f0f0f0;
-            --tg-theme-hint-color: #999999;
+            --tg-theme-button-text-color: #fff;
         }
-
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: sans-serif;
             background-color: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
             margin: 0; padding: 15px;
-            -webkit-user-select: none;
         }
-
-        #app { max-width: 600px; margin: 0 auto; }
-
-        .loading-status { text-align: center; margin-top: 50px; color: var(--tg-theme-hint-color); }
-
         .category-card, .service-card {
-            background: var(--tg-theme-secondary-bg-color);
-            padding: 16px; border-radius: 12px; margin-bottom: 12px;
-            cursor: pointer; transition: opacity 0.2s;
-            border: 1px solid rgba(0,0,0,0.05);
+            background: rgba(0,0,0,0.05);
+            padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer;
         }
-        .category-card:active, .service-card:active { opacity: 0.7; }
-
-        .price { font-weight: bold; color: var(--tg-theme-button-color); font-size: 1.1em; }
-        
+        .price { font-weight: bold; color: var(--tg-theme-button-color); }
         .btn {
             background: var(--tg-theme-button-color);
             color: var(--tg-theme-button-text-color);
-            border: none; width: 100%; padding: 14px; border-radius: 10px;
-            font-weight: bold; font-size: 16px; cursor: pointer; margin-top: 15px;
+            border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold;
         }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
-
-        input, select {
-            width: 100%; padding: 12px; margin: 8px 0 16px;
-            border: 1px solid #ccc; border-radius: 8px;
-            background: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
-            font-size: 16px; box-sizing: border-box;
-        }
-
-        .back-btn {
-            color: var(--tg-theme-button-color);
-            cursor: pointer; display: inline-block; margin-bottom: 15px;
-            font-weight: 500;
-        }
-
-        .desc { font-size: 0.9em; color: var(--tg-theme-hint-color); margin: 5px 0; }
-        hr { border: 0; border-top: 1px solid var(--tg-theme-secondary-bg-color); margin: 20px 0; }
+        .back-btn { color: var(--tg-theme-button-color); cursor: pointer; display: block; margin-bottom: 10px; }
+        .loading { text-align: center; padding: 20px; opacity: 0.6; }
+        input, select { width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; }
     </style>
 </head>
 <body>
     <div id="app">
-        <!-- Состояние загрузки -->
-        <div v-if="loadingData" class="loading-status">
-            Загрузка каталога...
+        <!-- Индикатор загрузки -->
+        <div v-if="loading" class="loading">
+            {{ statusMessage }}
         </div>
 
-        <!-- Если данных нет и загрузка завершена -->
-        <div v-else-if="services.length === 0" class="loading-status">
-            Каталог пока пуст. <br>Проверьте вкладку "Services" в таблице.
-        </div>
-
-        <!-- Главная: Выбор категории -->
-        <div v-if="view === 'categories' && services.length > 0">
+        <!-- КАТЕГОРИИ -->
+        <div v-if="!loading && view === 'categories'">
             <h2>Каталог услуг</h2>
             <div v-for="cat in uniqueCategories" :key="cat" class="category-card" @click="selectCategory(cat)">
-                <strong>{{ cat }}</strong>
+                {{ cat }}
             </div>
         </div>
 
-        <!-- Список услуг в категории -->
+        <!-- СПИСОК УСЛУГ -->
         <div v-if="view === 'services'">
             <span class="back-btn" @click="view = 'categories'">← Назад</span>
             <h2>{{ currentCategory }}</h2>
             <div v-for="s in filteredServices" :key="s.name" class="service-card" @click="selectService(s)">
-                <strong>{{ s.name }}</strong>
-                <div class="desc">{{ s.desc }}</div>
-                <div class="price">{{ s.price }} руб.</div>
+                <strong>{{ s.name }}</strong><br>
+                <span class="price">{{ s.price }} руб.</span>
             </div>
         </div>
 
-        <!-- Форма записи -->
+        <!-- ОФОРМЛЕНИЕ -->
         <div v-if="view === 'details'">
-            <span class="back-btn" @click="view = 'services'">← К списку</span>
+            <span class="back-btn" @click="view = 'services'">← Назад</span>
             <h2>{{ selectedService.name }}</h2>
             <p>{{ selectedService.desc }}</p>
-            <p class="price">К оплате: {{ selectedService.price }} руб.</p>
-            
+            <p class="price">Цена: {{ selectedService.price }} руб.</p>
             <hr>
-            <h3>Запись на ремонт</h3>
-            
-            <label>Ваше имя</label>
-            <input v-model="form.name" placeholder="Иван Иванович">
-
-            <label>Телефон</label>
-            <input v-model="form.phone" type="tel" placeholder="+7 900 000-00-00">
-
-            <label>Желаемое время</label>
+            <input v-model="form.name" placeholder="Ваше имя">
+            <input v-model="form.phone" type="tel" placeholder="Телефон">
             <select v-model="form.time">
                 <option v-for="slot in timeSlots" :key="slot" :value="slot">{{ slot }}</option>
             </select>
-            
-            <button class="btn" @click="submitBooking" :disabled="submitting">
-                {{ submitting ? 'Отправка...' : 'Подтвердить запись' }}
-            </button>
+            <button class="btn" @click="submitBooking">Записаться</button>
         </div>
     </div>
 
     <script>
-        // ВАЖНО: Вставьте сюда вашу ссылку из Google Apps Script
+        // ВСТАВЬ СВОЮ ССЫЛКУ ТУТ:
         const API_URL = 'https://script.google.com/macros/s/AKfycbw9AstBi2VXyep9ORefWpgq_c1UNKi1ythL0hkdX5HPna83vcmpGdozpNK7_MuHrJm3/exec';
 
         const { createApp } = Vue;
@@ -133,42 +85,48 @@
                 return {
                     view: 'categories',
                     services: [],
-                    loadingData: true,
+                    loading: true,
+                    statusMessage: 'Загрузка данных...',
                     currentCategory: '',
                     selectedService: null,
-                    submitting: false,
                     form: { name: '', phone: '', time: '10:00' },
                     timeSlots: []
                 }
             },
             computed: {
                 uniqueCategories() {
-                    const cats = this.services.map(s => s.category);
-                    return [...new Set(cats)];
+                    // Извлекаем все категории и убираем дубликаты
+                    return [...new Set(this.services.map(s => s.category))];
                 },
                 filteredServices() {
                     return this.services.filter(s => s.category === this.currentCategory);
                 }
             },
-            mounted() {
-                const tg = window.Telegram.WebApp;
-                tg.expand();
-                tg.ready();
-                this.fetchData();
+            async mounted() {
+                // Инициализация Telegram
+                if (window.Telegram && window.Telegram.WebApp) {
+                    window.Telegram.WebApp.ready();
+                    window.Telegram.WebApp.expand();
+                }
                 this.generateTimeSlots();
+                await this.fetchData();
             },
             methods: {
                 async fetchData() {
                     try {
-                        const response = await fetch(API_URL);
-                        const data = await response.json();
-                        if (data.services) {
+                        const res = await fetch(API_URL);
+                        if (!res.ok) throw new Error("Ошибка сервера Google");
+                        const data = await res.json();
+                        
+                        if (data.services && data.services.length > 0) {
                             this.services = data.services;
+                            this.loading = false;
+                        } else {
+                            this.statusMessage = "В таблице нет данных (проверьте лист Services)";
                         }
                     } catch (e) {
-                        alert("Ошибка загрузки данных из таблицы: " + e);
-                    } finally {
-                        this.loadingData = false;
+                        this.statusMessage = "Ошибка подключения: " + e.message;
+                        console.error(e);
                     }
                 },
                 generateTimeSlots() {
@@ -186,30 +144,28 @@
                     this.view = 'details';
                 },
                 async submitBooking() {
-                    if (!this.form.name || !this.form.phone) {
-                        alert('Пожалуйста, заполните имя и телефон');
-                        return;
-                    }
-                    this.submitting = true;
+                    if (!this.form.name || !this.form.phone) return alert('Заполните данные!');
                     
+                    this.statusMessage = "Отправка записи...";
+                    this.loading = true;
+
                     try {
-                        const response = await fetch(API_URL, {
+                        // Используем no-cors для обхода ограничений Google Apps Script при POST
+                        await fetch(API_URL, {
                             method: 'POST',
-                            mode: 'no-cors', // Важно для работы с Google Script POST
+                            mode: 'no-cors',
                             body: JSON.stringify({
                                 ...this.form,
                                 service: this.selectedService.name
                             })
                         });
                         
-                        // Так как mode: 'no-cors', мы не получим JSON ответа, 
-                        // но поймем, что запрос ушел.
-                        alert('Заявка отправлена! Мы свяжемся с вами.');
-                        window.Telegram.WebApp.close();
+                        alert('Запись создана! Мы вам перезвоним.');
+                        if (window.Telegram.WebApp) window.Telegram.WebApp.close();
                     } catch (e) {
-                        alert('Ошибка при отправке: ' + e);
+                        alert('Ошибка при записи: ' + e.message);
                     } finally {
-                        this.submitting = false;
+                        this.loading = false;
                     }
                 }
             }
