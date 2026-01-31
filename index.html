@@ -2,137 +2,260 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Мастерская: Запись</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Мастерская Электротранспорта</title>
+    <!-- Подключаем Telegram WebApp SDK и Vue 3 -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
-        :root { --tg-theme-bg-color: #fff; --tg-theme-text-color: #000; --tg-theme-button-color: #248bed; }
-        body { font-family: sans-serif; background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color); padding: 15px; }
-        .category-card, .service-card { background: rgba(0,0,0,0.05); padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer; }
-        .btn { background: var(--tg-theme-button-color); color: #fff; border: none; width: 100%; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .btn:disabled { opacity: 0.5; }
-        input, select { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; }
-        option:disabled { color: #ccc; }
-        .back { color: var(--tg-theme-button-color); cursor: pointer; margin-bottom: 15px; display: block; }
+        :root {
+            --tg-theme-bg-color: #fff;
+            --tg-theme-text-color: #000;
+            --tg-theme-button-color: #248bed;
+            --tg-theme-button-text-color: #fff;
+            --tg-theme-secondary-bg-color: #efeff4;
+            --tg-theme-hint-color: #999;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            margin: 0;
+            padding: 16px;
+            line-height: 1.5;
+        }
+
+        /* Карточки категорий и услуг */
+        .card {
+            background-color: var(--tg-theme-secondary-bg-color);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            cursor: pointer;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.1s;
+        }
+        .card:active { transform: scale(0.98); }
+
+        .price { color: var(--tg-theme-button-color); font-weight: bold; }
+        .desc { font-size: 0.9em; color: var(--tg-theme-hint-color); margin: 4px 0; }
+
+        /* Кнопки */
+        .btn {
+            background-color: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none;
+            width: 100%;
+            padding: 14px;
+            border-radius: 10px;
+            font-weight: bold;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .btn:disabled { opacity: 0.5; filter: grayscale(1); }
+
+        /* Поля ввода и выпадающие списки */
+        input, select {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        option:disabled { color: var(--tg-theme-hint-color); background: #eee; }
+
+        .back-link {
+            color: var(--tg-theme-button-color);
+            text-decoration: none;
+            display: inline-block;
+            margin-bottom: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .loading { text-align: center; margin-top: 50px; color: var(--tg-theme-hint-color); }
+        hr { border: 0; border-top: 1px solid rgba(0,0,0,0.1); margin: 20px 0; }
     </style>
 </head>
 <body>
-    <div id="app">
-        <div v-if="loading" style="text-align:center; padding: 50px;">Загрузка...</div>
 
-        <!-- Экран категорий -->
-        <div v-if="!loading && view === 'categories'">
-            <h2>Каталог услуг</h2>
-            <div v-for="cat in uniqueCategories" class="category-card" @click="currentCategory = cat; view = 'services'">
-                {{ cat }}
-            </div>
-        </div>
+<div id="app">
+    <!-- Индикатор загрузки -->
+    <div v-if="loading" class="loading">
+        Загрузка прайса...
+    </div>
 
-        <!-- Экран услуг -->
-        <div v-if="view === 'services'">
-            <span class="back" @click="view = 'categories'">← Назад</span>
-            <h2>{{ currentCategory }}</h2>
-            <div v-for="s in filteredServices" class="service-card" @click="selectedService = s; view = 'details'">
-                <strong>{{ s.name }}</strong><br> {{ s.price }} руб.
-            </div>
-        </div>
-
-        <!-- Экран оформления -->
-        <div v-if="view === 'details'">
-            <span class="back" @click="view = 'services'">← Назад</span>
-            <h2>{{ selectedService.name }}</h2>
-            <p>{{ selectedService.desc }}</p>
-            
-            <label>Ваше имя:</label>
-            <input v-model="form.name" placeholder="Введите имя">
-            
-            <label>Телефон:</label>
-            <input v-model="form.phone" type="tel" placeholder="+7...">
-
-            <label>Время (на сегодня):</label>
-            <select v-model="form.time">
-                <option v-for="slot in timeSlots" 
-                        :key="slot" 
-                        :value="slot" 
-                        :disabled="isFull(slot)">
-                    {{ slot }} {{ isFull(slot) ? '(занято)' : '' }}
-                </option>
-            </select>
-
-            <button class="btn" @click="send" :disabled="submitting || isFull(form.time)">
-                {{ submitting ? 'Отправка...' : 'Подтвердить запись' }}
-            </button>
+    <!-- 1. Экран выбора категорий -->
+    <div v-if="!loading && view === 'categories'">
+        <h2>Каталог услуг</h2>
+        <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)">
+            <strong>{{ cat }}</strong>
         </div>
     </div>
 
-    <script>
-        const API_URL = 'ТВОЙ_URL_ИЗ_GOOGLE';
+    <!-- 2. Экран списка услуг -->
+    <div v-if="view === 'services'">
+        <div class="back-link" @click="view = 'categories'">← Назад к категориям</div>
+        <h2>{{ currentCategory }}</h2>
+        <div v-for="s in filteredServices" :key="s.name" class="card" @click="openDetails(s)">
+            <strong>{{ s.name }}</strong>
+            <div class="desc">{{ s.desc }}</div>
+            <div class="price">{{ s.price }} руб.</div>
+        </div>
+    </div>
 
-        const { createApp } = Vue;
-        createApp({
-            data() {
-                return {
-                    view: 'categories',
-                    loading: true,
-                    submitting: false,
-                    services: [],
-                    bookedCounts: {}, // Тут будут данные о занятых местах
-                    maxBookings: 1,
-                    currentCategory: '',
-                    selectedService: null,
-                    form: { name: '', phone: '', time: '10:00' },
-                    timeSlots: []
-                }
-            },
-            computed: {
-                uniqueCategories() { return [...new Set(this.services.map(s => s.category))]; },
-                filteredServices() { return this.services.filter(s => s.category === this.currentCategory); }
-            },
-            methods: {
-                async load() {
-                    try {
-                        const r = await fetch(API_URL);
-                        const d = await r.json();
-                        this.services = d.services;
-                        this.bookedCounts = d.bookedCounts || {};
-                        this.maxBookings = d.maxBookings || 1;
-                        this.loading = false;
-                    } catch (e) { alert("Ошибка загрузки"); }
+    <!-- 3. Экран оформления заказа -->
+    <div v-if="view === 'details'">
+        <div class="back-link" @click="view = 'services'">← К списку услуг</div>
+        <h2>{{ selectedService.name }}</h2>
+        <p class="desc">{{ selectedService.desc }}</p>
+        <p>Стоимость: <span class="price">{{ selectedService.price }} руб.</span></p>
+        
+        <hr>
+        
+        <label>Ваше имя</label>
+        <input v-model="form.name" type="text" placeholder="Иван">
+
+        <label>Телефон</label>
+        <input v-model="form.phone" type="tel" placeholder="+7 (999) 000-00-00">
+
+        <label>Время записи (сегодня)</label>
+        <select v-model="form.time">
+            <option v-for="slot in timeSlots" 
+                    :key="slot" 
+                    :value="slot" 
+                    :disabled="isSlotFull(slot)">
+                {{ slot }} {{ isSlotFull(slot) ? '— (занято)' : '' }}
+            </option>
+        </select>
+
+        <button class="btn" @click="submitBooking" :disabled="submitting || isSlotFull(form.time)">
+            {{ submitting ? 'Отправка...' : 'Подтвердить запись' }}
+        </button>
+    </div>
+</div>
+
+<script>
+    // ВСТАВЬТЕ ВАШУ ССЫЛКУ ИЗ GOOGLE APPS SCRIPT ТУТ
+    const API_URL = 'ВАШ_URL_ИЗ_GOOGLE_SCRIPTS';
+
+    const { createApp } = Vue;
+
+    createApp({
+        data() {
+            return {
+                view: 'categories',
+                loading: true,
+                submitting: false,
+                services: [],
+                bookedCounts: {},
+                maxBookings: 1,
+                currentCategory: '',
+                selectedService: null,
+                form: {
+                    name: '',
+                    phone: '',
+                    time: '10:00'
                 },
-                generateSlots() {
-                    for (let h = 10; h <= 20; h++) {
-                        this.timeSlots.push(`${h}:00`, `${h}:30`);
-                    }
-                },
-                isFull(slot) {
-                    // Если maxBookings равно 0, то абсолютно все слоты должны быть отключены
-                    if (this.maxBookings === 0) return true;
-    
-                    const count = this.bookedCounts[slot] || 0;
-                    return count >= this.maxBookings;
-                }
-                async send() {
-                    if (!this.form.name || !this.form.phone) return alert("Заполните поля");
-                    this.submitting = true;
-                    try {
-                        await fetch(API_URL, {
-                            method: 'POST',
-                            mode: 'no-cors',
-                            body: JSON.stringify({...this.form, service: this.selectedService.name})
-                        });
-                        alert("Вы успешно записаны!");
-                        window.Telegram.WebApp.close();
-                    } catch (e) { alert("Ошибка при отправке"); }
-                }
-            },
-            mounted() {
-                this.generateSlots();
-                this.load();
-                window.Telegram.WebApp.ready();
+                timeSlots: []
             }
-        }).mount('#app');
-    </script>
+        },
+        computed: {
+            uniqueCategories() {
+                const cats = this.services.map(s => s.category);
+                return [...new Set(cats)];
+            },
+            filteredServices() {
+                return this.services.filter(s => s.category === this.currentCategory);
+            }
+        },
+        methods: {
+            async fetchData() {
+                try {
+                    const response = await fetch(API_URL);
+                    const data = await response.json();
+                    
+                    this.services = data.services || [];
+                    this.bookedCounts = data.bookedCounts || {};
+                    this.maxBookings = data.maxBookings ?? 1;
+                    
+                    this.loading = false;
+                } catch (e) {
+                    alert("Ошибка загрузки данных. Проверьте соединение и права доступа.");
+                    console.error(e);
+                }
+            },
+            generateTimeSlots() {
+                const slots = [];
+                for (let h = 10; h <= 20; h++) {
+                    slots.push(`${h}:00`);
+                    slots.push(`${h}:30`);
+                }
+                this.timeSlots = slots;
+            },
+            isSlotFull(slot) {
+                if (this.maxBookings === 0) return true;
+                const count = this.bookedCounts[slot] || 0;
+                return count >= this.maxBookings;
+            },
+            openCategory(cat) {
+                this.currentCategory = cat;
+                this.view = 'services';
+            },
+            openDetails(service) {
+                this.selectedService = service;
+                this.view = 'details';
+            },
+            async submitBooking() {
+                if (!this.form.name || !this.form.phone) {
+                    alert("Пожалуйста, заполните имя и телефон");
+                    return;
+                }
+
+                this.submitting = true;
+                try {
+                    // Отправляем POST через no-cors, так как Google Apps Script не поддерживает стандартный CORS для JSON
+                    await fetch(API_URL, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        cache: 'no-cache',
+                        body: JSON.stringify({
+                            name: this.form.name,
+                            phone: this.form.phone,
+                            time: this.form.time,
+                            service: this.selectedService.name
+                        })
+                    });
+
+                    alert("Заявка отправлена! Мы скоро свяжемся с вами.");
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        window.Telegram.WebApp.close();
+                    }
+                } catch (e) {
+                    alert("Ошибка при отправке: " + e.message);
+                } finally {
+                    this.submitting = false;
+                }
+            }
+        },
+        mounted() {
+            // Инициализация Telegram WebApp
+            if (window.Telegram && window.Telegram.WebApp) {
+                window.Telegram.WebApp.ready();
+                window.Telegram.WebApp.expand();
+            }
+            
+            this.generateTimeSlots();
+            this.fetchData();
+        }
+    }).mount('#app');
+</script>
+
 </body>
 </html>
-
