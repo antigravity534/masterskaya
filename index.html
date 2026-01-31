@@ -111,9 +111,21 @@
             },
             methods: {
                 async fetchData() {
+                 try {
                     const res = await fetch(API_URL);
+                    if (!res.ok) throw new Error('Ошибка сети');
                     const data = await res.json();
+
+                    if (data.error) {
+                        alert('Ошибка скрипта: ' + data.error);
+                        return;
+                    }
                     this.services = data.services;
+                    console.log("Данные получены:", this.services);
+                  } catch (e) {
+                        alert('Не удалось загрузить данные. Проверьте права доступа в Google Script. Ошибка: ' + e);
+                  }
+
                 },
                 generateTimeSlots() {
                     for (let h = 10; h <= 20; h++) {
@@ -161,3 +173,4 @@
 </body>
 
 </html>
+
