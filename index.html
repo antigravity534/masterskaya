@@ -106,10 +106,12 @@
                     }
                 },
                 isFull(slot) {
-                    // Проверяем, сколько раз это время уже встречается в Bookings
+                    // Если maxBookings равно 0, то абсолютно все слоты должны быть отключены
+                    if (this.maxBookings === 0) return true;
+    
                     const count = this.bookedCounts[slot] || 0;
                     return count >= this.maxBookings;
-                },
+                }
                 async send() {
                     if (!this.form.name || !this.form.phone) return alert("Заполните поля");
                     this.submitting = true;
@@ -133,3 +135,4 @@
     </script>
 </body>
 </html>
+
