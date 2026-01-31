@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мастерская Электротранспорта</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --tg-theme-bg-color: #fff;
+            --tg-theme-text-color: #000;
+            --tg-theme-button-color: #248bed;
+            --tg-theme-button-text-color: #fff;
+            --tg-theme-hint-color: #999;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--tg-theme-bg-color);
+            color: var(--tg-theme-text-color);
+            margin: 0; padding: 15px;
+        }
+        .category-card, .service-card {
+            background: rgba(0,0,0,0.05);
+            padding: 15px; border-radius: 12px; margin-bottom: 10px; cursor: pointer;
+        }
+        .btn {
+            background: var(--tg-theme-button-color);
+            color: var(--tg-theme-button-text-color);
+            border: none; width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; margin-top: 10px;
+        }
+        input, select {
+            width: 100%; padding: 10px; margin: 5px 0 15px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box;
+        }
+        .back-btn { color: var(--tg-theme-button-color); cursor: pointer; margin-bottom: 15px; display: block; }
+        .price { font-weight: bold; color: var(--tg-theme-button-color); }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- Главная: Выбор категории -->
+        <div v-if="view === 'categories'">
+            <h2>Каталог услуг</h2>
+            <div v-for="cat in uniqueCategories" :key="cat" class="category-card" @click="selectCategory(cat)">
+                {{ cat }}
+            </div>
+        </div>
+
+        <!-- Список услуг -->
+        <div v-if="view === 'services'">
+            <span class="back-btn" @click="view = 'categories'">← Назад</span>
+            <h2>{{ currentCategory }}</h2>
+            <div v-for="s in filteredServices" :key="s.name" class="service-card" @click="selectService(s)">
+                <strong>{{ s.name }}</strong><br>
+                <span class="price">{{ s.price }} руб.</span>
+            </div>
+        </div>
+
+        <!-- Детали услуги и запись -->
+        <div v-if="view === 'details'">
+            <span class="back-btn" @click="view = 'services'">← К списку</span>
+            <h2>{{ selectedService.name }}</h2>
+            <p>{{ selectedService.desc }}</p>
+            <p class="price">Цена: {{ selectedService.price }} руб.</p>
+            
+            <hr>
+            <h3>Запись на ремонт</h3>
+            <label>Выберите время (сегодня):</label>
+            <select v-model="form.time">
+                <option v-for="slot in timeSlots" :key="slot" :value="slot">{{ slot }}</option>
+            </select>
+
+            <input v-model="form.name" placeholder="Ваше имя">
+            <input v-model="form.phone" type="tel" placeholder="+7 (___) ___ - __ - __">
+            
+            <button class="btn" @click="submitBooking" :disabled="loading">
+                {{ loading ? 'Отправка...' : 'Подтвердить запись' }}
+            </button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'ВАШ_URL_ИЗ_ШАГА_2';
+
+        const { createApp } = Vue;
+        createApp({
+            data() {
+                return {
+                    view: 'categories',
+                    services: [],
+                    currentCategory: '',
+                    selectedService: null,
+                    loading: false,
+                    form: { name: '', phone: '', time: '10:00' },
+                    timeSlots: []
+                }
+            },
+            computed: {
+                uniqueCategories() {
+                    return [...new Set(this.services.map(s => s.category))];
+                },
+                filteredServices() {
+                    return this.services.filter(s => s.category === this.currentCategory);
+                }
+            },
+            mounted() {
+                const tg = window.Telegram.WebApp;
+                tg.expand();
+                this.fetchData();
+                this.generateTimeSlots();
+            },
+            methods: {
+                async fetchData() {
+                    const res = await fetch(API_URL);
+                    const data = await res.json();
+                    this.services = data.services;
+                },
+                generateTimeSlots() {
+                    for (let h = 10; h <= 20; h++) {
+                        this.timeSlots.push(`${h}:00`);
+                        this.timeSlots.push(`${h}:30`);
+                    }
+                },
+                selectCategory(cat) {
+                    this.currentCategory = cat;
+                    this.view = 'services';
+                },
+                selectService(s) {
+                    this.selectedService = s;
+                    this.view = 'details';
+                },
+                async submitBooking() {
+                    if (!this.form.name || !this.form.phone) return alert('Заполните данные');
+                    this.loading = true;
+                    
+                    try {
+                        const response = await fetch(API_URL, {
+                            method: 'POST',
+                            body: JSON.stringify({
+                                ...this.form,
+                                service: this.selectedService.name
+                            })
+                        });
+                        const result = await response.json();
+                        
+                        if (result.status === 'ok') {
+                            alert('Запись успешно создана!');
+                            window.Telegram.WebApp.close();
+                        } else {
+                            alert('Ошибка: ' + result.message);
+                        }
+                    } catch (e) {
+                        alert('Произошла ошибка при отправке');
+                    } finally {
+                        this.loading = false;
+                    }
+                }
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
