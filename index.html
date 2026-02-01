@@ -258,12 +258,15 @@
                 return await r.json();
             },
             async checkOrderStatus() {
+                if (!this.checkId) return;
+                this.checkResult = null; // Сбрасываем старый результат, чтобы поле не "зависало"
                 this.loading = true;
                 try {
                     const res = await this.apiGet({ action: 'check_status', orderId: this.checkId });
+                    console.log("Результат проверки:", res); // Для отладки в консоли
                     this.checkResult = res;
                 } catch (e) {
-                    alert("Ошибка при проверке");
+                    alert("Ошибка при проверке связи с сервером");
                 } finally {
                     this.loading = false;
                 }
@@ -379,3 +382,4 @@
 
 </body>
 </html>
+
