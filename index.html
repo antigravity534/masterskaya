@@ -197,11 +197,17 @@
             
             // --- МЕТОДЫ МАСТЕРА (ТЕПЕРЬ ЧЕРЕЗ GET) ---
             toggleClientMode() { this.isMasterMode = !this.isMasterMode; },
-            
+
             async takeOrder() {
                 if (!this.targetId || this.targetId.length !== 3) return alert("Введите 3 цифры ID");
                 this.loading = true;
-                const res = await this.apiGet({ action: 'take_order', orderId: this.targetId, masterName: this.masterName });
+                // Добавили masterId: this.tgId
+                const res = await this.apiGet({ 
+                    action: 'take_order', 
+                    orderId: this.targetId, 
+                    masterName: this.masterName,
+                    masterId: this.tgId 
+                });
                 this.loading = false;
                 if (res.status === 'ok') { alert("Заказ взят!"); this.masterView = 'menu'; this.targetId = ''; }
                 else alert(res.message);
@@ -211,9 +217,14 @@
                 if (!this.form.name || !this.form.phoneDisplay || !this.form.service) return alert("Заполните поля");
                 const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
                 this.loading = true;
+                // Добавили masterId: this.tgId
                 const res = await this.apiGet({ 
                     action: 'create_master_order', 
-                    name: this.form.name, phone: rawPhone, service: this.form.service, masterName: this.masterName 
+                    name: this.form.name, 
+                    phone: rawPhone, 
+                    service: this.form.service, 
+                    masterName: this.masterName,
+                    masterId: this.tgId 
                 });
                 this.loading = false;
                 if (res.status === 'ok') { alert("Заказ создан и взят в работу!"); this.masterView = 'menu'; }
@@ -302,3 +313,4 @@
 
 </body>
 </html>
+
