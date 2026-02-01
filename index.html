@@ -9,22 +9,24 @@
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
     <style>
+        /* --- НАСТРОЙКИ ЦВЕТОВ --- */
         :root {
-            --tg-theme-bg-color: #fff;
-            --tg-theme-text-color: #000;
-            --tg-theme-button-color: #248bed;
-            --tg-theme-button-text-color: #fff;
-            --tg-theme-secondary-bg-color: #efeff4;
-            --tg-theme-hint-color: #999;
+            --btn-bg-color: #248bed;       /* Цвет заливки кнопок */
+            --btn-text-color: #ffffff;     /* Цвет текста на кнопках */
+            --bg-color: #ffffff;           /* Основной фон сайта */
+            --text-color: #000000;         /* Основной цвет текста */
+            --secondary-bg: #efeff4;       /* Фон карточек и инпутов */
+            --hint-color: #999999;         /* Цвет подсказок */
         }
 
         [v-cloak] { display: none; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--tg-theme-bg-color);
-            color: var(--tg-theme-text-color);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             margin: 0; padding: 15px;
+            padding-top: 10px;
         }
 
         /* Поиск */
@@ -33,8 +35,8 @@
             padding: 12px 15px;
             border-radius: 10px;
             border: 1px solid rgba(0,0,0,0.1);
-            background: var(--tg-theme-secondary-bg-color);
-            color: var(--tg-theme-text-color);
+            background: var(--secondary-bg);
+            color: var(--text-color);
             font-size: 16px;
             box-sizing: border-box;
             outline: none;
@@ -50,45 +52,52 @@
         .sort-select {
             background: none;
             border: none;
-            color: var(--tg-theme-button-color);
+            color: var(--btn-bg-color);
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
         }
 
         .card {
-            background-color: var(--tg-theme-secondary-bg-color);
+            background-color: var(--secondary-bg);
             padding: 16px; border-radius: 12px; margin-bottom: 12px;
             cursor: pointer; border: 1px solid rgba(0,0,0,0.05);
         }
 
-        .price { color: var(--tg-theme-button-color); font-weight: bold; }
-        .desc { font-size: 0.9em; color: var(--tg-theme-hint-color); margin: 4px 0; }
+        .price { color: var(--btn-bg-color); font-weight: bold; }
+        .desc { font-size: 0.9em; color: var(--hint-color); margin: 4px 0; }
         
-        /* Категория в результатах поиска теперь снизу */
         .cat-tag { 
             font-size: 0.75em; 
-            color: var(--tg-theme-hint-color);
+            color: var(--hint-color);
             display: block;
             margin-top: 4px;
         }
 
         .btn {
-            background-color: var(--tg-theme-button-color);
-            color: var(--tg-theme-button-text-color);
+            background-color: var(--btn-bg-color);
+            color: var(--btn-text-color);
             border: none; width: 100%; padding: 14px; border-radius: 10px;
             font-weight: bold; font-size: 16px; cursor: pointer;
         }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        input[type="text"], input[type="tel"], select {
-            width: 100%; padding: 12px; margin: 8px 0 16px;
-            border: 1px solid #ccc; border-radius: 8px;
-            background: var(--tg-theme-bg-color); color: var(--tg-theme-text-color);
-            font-size: 16px; box-sizing: border-box;
+        /* Унифицированные стили для всех полей ввода (Имя, Телефон, Селекты) */
+        input, select {
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0 16px;
+            border: 1px solid #ccc; 
+            border-radius: 8px;
+            background: var(--bg-color); 
+            color: var(--text-color);
+            font-size: 16px; 
+            box-sizing: border-box; /* Чтобы padding не раздувал ширину */
+            display: block;
         }
 
-        .back-link { color: var(--tg-theme-button-color); cursor: pointer; margin-bottom: 15px; display: block; font-weight: 500; }
-        .loading-screen { text-align: center; margin-top: 100px; color: var(--tg-theme-hint-color); }
+        .back-link { color: var(--btn-bg-color); cursor: pointer; margin-bottom: 15px; display: block; font-weight: 500; }
+        .loading-screen { text-align: center; margin-top: 100px; color: var(--hint-color); }
     </style>
 </head>
 <body>
@@ -100,10 +109,8 @@
     </div>
 
     <div v-else>
-        <!-- ЗАГОЛОВОК -->
         <h2 style="margin-bottom: 10px;">{{ headerTitle }}</h2>
 
-        <!-- ПОИСК (ПОД ЗАГОЛОВКОМ) -->
         <div v-if="view !== 'details'">
             <input 
                 type="text" 
@@ -113,23 +120,21 @@
             >
         </div>
 
-        <!-- ГЛАВНЫЙ ЭКРАН (КАТЕГОРИИ) -->
         <div v-if="view === 'categories' && !isSearching">
             <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)">
                 <strong>{{ cat }}</strong>
             </div>
         </div>
 
-        <!-- СПИСОК УСЛУГ (В КАТЕГОРИИ ИЛИ ПОИСК) -->
         <div v-if="view === 'services' || isSearching">
             <div v-if="!isSearching" class="back-link" @click="goBack">← Назад к категориям</div>
             <div v-else class="back-link" @click="searchQuery = ''">✕ Сбросить поиск</div>
 
             <div class="sort-container">
-                <span style="font-size: 14px; color: var(--tg-theme-hint-color)">
+                <span style="font-size: 14px; color: var(--hint-color)">
                     Найдено: {{ sortedServices.length }}
                 </span>
-                <select v-model="sortBy" class="sort-select">
+                <select v-model="sortBy" class="sort-select" style="width: auto; margin: 0; padding: 5px;">
                     <option value="default">По умолчанию</option>
                     <option value="price_asc">Дешевле</option>
                     <option value="price_desc">Дороже</option>
@@ -141,7 +146,6 @@
                 <strong>{{ s.name }}</strong>
                 <div class="desc">{{ s.desc }}</div>
                 <div class="price">{{ s.price }} руб.</div>
-                <!-- Название категории под названием услуги -->
                 <span v-if="isSearching" class="cat-tag">Раздел: {{ s.category }}</span>
             </div>
         </div>
@@ -161,12 +165,17 @@
 
             <label>Выберите время:</label>
             <select v-model="form.time">
+                <!-- Если слотов нет для этого дня (например, всё прошло) -->
+                <option v-if="filteredTimeSlots.length === 0" disabled value="">Нет доступного времени на сегодня</option>
                 <option v-for="slot in filteredTimeSlots" :key="slot" :value="slot" :disabled="isSlotFull(slot)">
-                    {{ slot }} {{ isSlotFull(slot) ? '(занято)' : '' }}
+                    {{ slot }} {{ isSlotFull(slot) ? '— (занято)' : '' }}
                 </option>
             </select>
 
-            <input v-model="form.name" placeholder="Ваше имя">
+            <label>Ваше имя:</label>
+            <input v-model="form.name" type="text" placeholder="Введите имя">
+            
+            <label>Телефон:</label>
             <input v-model="form.phone" type="tel" placeholder="+7...">
             
             <button class="btn" @click="submitBooking" :disabled="submitting || !form.time">
@@ -212,7 +221,6 @@
             uniqueCategories() {
                 return [...new Set(this.services.map(s => s.category))];
             },
-            // ФИЛЬТРАЦИЯ И СОРТИРОВКА
             sortedServices() {
                 let list = [];
                 if (this.isSearching) {
@@ -229,7 +237,6 @@
                 
                 return result;
             },
-            // УМНОЕ ВРЕМЯ: скрываем то, что уже прошло
             filteredTimeSlots() {
                 const slots = [];
                 for (let h = 10; h <= 20; h++) {
@@ -238,13 +245,14 @@
 
                 if (this.form.date === this.serverToday) {
                     const now = new Date();
+                    // Если вы тестируете с ПК, убедитесь, что время на ПК совпадает с реальностью
                     const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
                     
                     return slots.filter(slot => {
                         const [h, m] = slot.split(':').map(Number);
                         const slotTotalMinutes = h * 60 + m;
-                        // Показываем только если до времени слота еще хотя бы 30 минут
-                        return slotTotalMinutes > (currentTotalMinutes + 30);
+                        // Показываем только если до времени слота еще хотя бы 15 минут
+                        return slotTotalMinutes > (currentTotalMinutes + 15);
                     });
                 }
                 return slots;
@@ -259,7 +267,7 @@
                     this.bookedCounts = data.bookedCounts || {};
                     this.maxBookings = data.maxBookings;
                     this.serverToday = data.serverToday;
-                    this.form.date = data.serverToday; // По умолчанию сегодня
+                    this.form.date = data.serverToday; 
                     
                     this.generateAvailableDates();
                     this.loading = false;
@@ -270,15 +278,12 @@
             generateAvailableDates() {
                 const dates = [];
                 const daysOfWeek = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
-                
-                // Берем текущую дату с сервера
                 const [d, m, y] = this.serverToday.split('.').map(Number);
                 const baseDate = new Date(y, m - 1, d);
 
                 for (let i = 0; i < 7; i++) {
                     const targetDate = new Date(baseDate);
                     targetDate.setDate(baseDate.getDate() + i);
-                    
                     const dd = String(targetDate.getDate()).padStart(2, '0');
                     const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
                     const yyyy = targetDate.getFullYear();
@@ -315,6 +320,10 @@
             },
             async submitBooking() {
                 if (!this.form.name || !this.form.phone || !this.form.time) return alert("Заполните все данные!");
+                
+                const bookingDate = this.form.date;
+                const bookingTime = this.form.time;
+                
                 this.submitting = true;
                 try {
                     await fetch(API_URL, {
@@ -322,10 +331,30 @@
                         mode: 'no-cors',
                         body: JSON.stringify({...this.form, service: this.selectedService.name})
                     });
+
+                    // ДИНАМИЧЕСКОЕ ОБНОВЛЕНИЕ БЕЗ ПЕРЕЗАГРУЗКИ
+                    // Обновляем локальное состояниеbookedCounts
+                    if (!this.bookedCounts[bookingDate]) {
+                        this.bookedCounts[bookingDate] = {};
+                    }
+                    this.bookedCounts[bookingDate][bookingTime] = (this.bookedCounts[bookingDate][bookingTime] || 0) + 1;
+
                     alert("Запись успешно создана!");
-                    if (window.Telegram.WebApp) window.Telegram.WebApp.close();
-                } catch (e) { alert("Ошибка при отправке"); }
-                finally { this.submitting = false; }
+                    
+                    // Закрываем приложение через 1.5 сек, чтобы пользователь успел увидеть алерт
+                    if (window.Telegram && window.Telegram.WebApp) {
+                        setTimeout(() => {
+                            window.Telegram.WebApp.close();
+                        }, 1000);
+                    } else {
+                        // Если открыто в браузере, просто возвращаемся к списку
+                        this.view = 'services';
+                        this.submitting = false;
+                    }
+                } catch (e) { 
+                    alert("Ошибка при отправке"); 
+                    this.submitting = false;
+                }
             }
         },
         mounted() {
@@ -340,4 +369,3 @@
 
 </body>
 </html>
-
