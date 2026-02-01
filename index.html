@@ -43,7 +43,7 @@
             <button class="btn" @click="masterView = 'create_order'">Создать запись</button>
             <button class="btn" @click="loadMasterWork">Текущая работа</button>
             <button class="btn" @click="toggleClientMode" style="background: #666;">Посмотреть каталог</button>
-            <button class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
+            <button class="btn" @click="masterView = 'check_status'" style="background: #666; margin-bottom: 20px;">
     🔍 Узнать статус заказа
 </button>
         </div>
@@ -95,6 +95,21 @@
     <div v-else>
         <div v-if="isMasterUser" style="background: #333; color: #fff; padding: 5px; font-size: 12px; cursor: pointer; text-align: center; margin-bottom: 10px;" @click="toggleClientMode">
             ⚙️ Вернуться в режим мастера
+            <!-- ЭКРАН ПРОВЕРКИ СТАТУСА ДЛЯ МАСТЕРА -->
+        <div v-if="masterView === 'check_status'">
+            <div class="back-link" @click="masterView = 'menu'; checkResult = null; checkId = '';">← В меню</div>
+            <h2>Проверка заказа</h2>
+            <input v-model="checkId" type="tel" maxlength="3" placeholder="ID (3 цифры)">
+            <button class="btn" @click="checkOrderStatus" :disabled="checkId.length < 3">Проверить</button>
+            
+            <div v-if="checkResult" class="card" style="margin-top: 20px; border: 1px solid var(--btn-bg-color);">
+                <div v-if="checkResult.status === 'ok'">
+                    <p><b>Статус:</b> {{ checkResult.order.status }}</p>
+                    <p><b>Услуга:</b> {{ checkResult.order.service }}</p>
+                </div>
+                <div v-else style="color: red;">{{ checkResult.message }}</div>
+            </div>
+        </div>
         </div>
 
         <div v-if="view !== 'details'">
@@ -207,7 +222,7 @@
                 } finally {
                     this.loading = false;
                 }
-            }
+            },
 
             async fetchData() {
                 try {
@@ -349,5 +364,6 @@
 
 </body>
 </html>
+
 
 
