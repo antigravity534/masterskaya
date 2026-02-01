@@ -25,17 +25,9 @@
             background-color: var(--tg-theme-bg-color);
             color: var(--tg-theme-text-color);
             margin: 0; padding: 15px;
-            padding-top: 10px;
         }
 
         /* Поиск */
-        .search-container {
-            position: sticky;
-            top: 0;
-            background: var(--tg-theme-bg-color);
-            padding: 5px 0 10px 0;
-            z-index: 10;
-        }
         .search-input {
             width: 100%;
             padding: 12px 15px;
@@ -46,9 +38,9 @@
             font-size: 16px;
             box-sizing: border-box;
             outline: none;
+            margin-bottom: 20px;
         }
 
-        /* Сортировка */
         .sort-container {
             margin-bottom: 15px;
             display: flex;
@@ -62,7 +54,6 @@
             font-size: 14px;
             font-weight: 500;
             cursor: pointer;
-            outline: none;
         }
 
         .card {
@@ -73,14 +64,13 @@
 
         .price { color: var(--tg-theme-button-color); font-weight: bold; }
         .desc { font-size: 0.9em; color: var(--tg-theme-hint-color); margin: 4px 0; }
+        
+        /* Категория в результатах поиска теперь снизу */
         .cat-tag { 
             font-size: 0.75em; 
-            text-transform: uppercase; 
-            background: rgba(0,0,0,0.05); 
-            padding: 2px 6px; 
-            border-radius: 4px;
-            display: inline-block;
-            margin-bottom: 5px;
+            color: var(--tg-theme-hint-color);
+            display: block;
+            margin-top: 4px;
         }
 
         .btn {
@@ -105,75 +95,81 @@
 
 <div id="app" v-cloak>
     
-    <!-- Индикатор загрузки -->
     <div v-if="loading" class="loading-screen">
         Загрузка данных...
     </div>
 
     <div v-else>
-        <!-- 1. ПОИСК (всегда сверху) -->
-        <div class="search-container" v-if="view !== 'details'">
+        <!-- ЗАГОЛОВОК -->
+        <h2 style="margin-bottom: 10px;">{{ headerTitle }}</h2>
+
+        <!-- ПОИСК (ПОД ЗАГОЛОВКОМ) -->
+        <div v-if="view !== 'details'">
             <input 
                 type="text" 
                 class="search-input" 
                 v-model="searchQuery" 
-                placeholder="🔍 Поиск услуг (например: прокол)"
+                placeholder="🔍 Найти услугу..."
             >
         </div>
 
-        <!-- 2. ГЛАВНЫЙ ЭКРАН (КАТЕГОРИИ) -->
+        <!-- ГЛАВНЫЙ ЭКРАН (КАТЕГОРИИ) -->
         <div v-if="view === 'categories' && !isSearching">
-            <h2>Каталог услуг</h2>
             <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)">
                 <strong>{{ cat }}</strong>
             </div>
         </div>
 
-        <!-- 3. СПИСОК УСЛУГ (В КАТЕГОРИИ ИЛИ ПОИСК) -->
+        <!-- СПИСОК УСЛУГ (В КАТЕГОРИИ ИЛИ ПОИСК) -->
         <div v-if="view === 'services' || isSearching">
             <div v-if="!isSearching" class="back-link" @click="goBack">← Назад к категориям</div>
             <div v-else class="back-link" @click="searchQuery = ''">✕ Сбросить поиск</div>
 
             <div class="sort-container">
-                <h2 style="margin:0">{{ isSearching ? 'Результаты поиска' : currentCategory }}</h2>
+                <span style="font-size: 14px; color: var(--tg-theme-hint-color)">
+                    Найдено: {{ sortedServices.length }}
+                </span>
                 <select v-model="sortBy" class="sort-select">
                     <option value="default">По умолчанию</option>
                     <option value="price_asc">Дешевле</option>
                     <option value="price_desc">Дороже</option>
-                    <option value="name">А-Я</option>
+                    <option value="name">По названию (А-Я)</option>
                 </select>
             </div>
 
-            <div v-if="displayedServices.length === 0" class="loading-screen">
-                Ничего не найдено...
-            </div>
-
-            <div v-for="s in displayedServices" :key="s.name" class="card" @click="openDetails(s)">
-                <div v-if="isSearching" class="cat-tag">{{ s.category }}</div>
+            <div v-for="s in sortedServices" :key="s.name" class="card" @click="openDetails(s)">
                 <strong>{{ s.name }}</strong>
                 <div class="desc">{{ s.desc }}</div>
                 <div class="price">{{ s.price }} руб.</div>
+                <!-- Название категории под названием услуги -->
+                <span v-if="isSearching" class="cat-tag">Раздел: {{ s.category }}</span>
             </div>
         </div>
 
-        <!-- 4. ОФОРМЛЕНИЕ ЗАПИСИ -->
+        <!-- ОФОРМЛЕНИЕ ЗАПИСИ -->
         <div v-if="view === 'details'">
-            <div class="back-link" @click="view = 'services'">← Назад к списку</div>
+            <div class="back-link" @click="view = 'services'">← К списку услуг</div>
             <h2>{{ selectedService.name }}</h2>
             <p class="desc">{{ selectedService.desc }}</p>
-            <p>Цена: <span class="price">{{ selectedService.price }} руб.</span></p>
-            <hr>
-            <label>Ваше имя</label>
-            <input v-model="form.name" placeholder="Введите имя">
-            <label>Телефон</label>
-            <input v-model="form.phone" type="tel" placeholder="+7...">
-            <label>Время записи</label>
+            
+            <label>Выберите день записи:</label>
+            <select v-model="form.date">
+                <option v-for="day in availableDates" :key="day.value" :value="day.value">
+                    {{ day.label }}
+                </option>
+            </select>
+
+            <label>Выберите время:</label>
             <select v-model="form.time">
-                <option v-for="slot in timeSlots" :key="slot" :value="slot" :disabled="isSlotFull(slot)">
+                <option v-for="slot in filteredTimeSlots" :key="slot" :value="slot" :disabled="isSlotFull(slot)">
                     {{ slot }} {{ isSlotFull(slot) ? '(занято)' : '' }}
                 </option>
             </select>
-            <button class="btn" @click="submitBooking" :disabled="submitting || isSlotFull(form.time)">
+
+            <input v-model="form.name" placeholder="Ваше имя">
+            <input v-model="form.phone" type="tel" placeholder="+7...">
+            
+            <button class="btn" @click="submitBooking" :disabled="submitting || !form.time">
                 {{ submitting ? 'Отправка...' : 'Подтвердить запись' }}
             </button>
         </div>
@@ -181,7 +177,7 @@
 </div>
 
 <script>
-    const API_URL = 'https://script.google.com/macros/s/AKfycbw9AstBi2VXyep9ORefWpgq_c1UNKi1ythL0hkdX5HPna83vcmpGdozpNK7_MuHrJm3/exec'; 
+    const API_URL = 'ВАША_ССЫЛКА_ИЗ_GOOGLE_SCRIPTS'; 
 
     const { createApp } = Vue;
 
@@ -198,44 +194,60 @@
                 selectedService: null,
                 searchQuery: '',
                 sortBy: 'default',
-                form: { name: '', phone: '', time: '10:00' },
-                timeSlots: []
+                serverToday: '',
+                form: { name: '', phone: '', time: '', date: '' },
+                availableDates: []
             }
         },
         computed: {
+            headerTitle() {
+                if (this.isSearching) return "Поиск";
+                if (this.view === 'categories') return "Каталог услуг";
+                if (this.view === 'services') return this.currentCategory;
+                return "Оформление";
+            },
             isSearching() {
                 return this.searchQuery.trim().length > 0;
             },
             uniqueCategories() {
                 return [...new Set(this.services.map(s => s.category))];
             },
-            // ГЛАВНАЯ ЛОГИКА ФИЛЬТРАЦИИ И СОРТИРОВКИ
-            displayedServices() {
-                let result = [];
-
-                // 1. Сначала фильтруем (по поиску или по категории)
+            // ФИЛЬТРАЦИЯ И СОРТИРОВКА
+            sortedServices() {
+                let list = [];
                 if (this.isSearching) {
                     const q = this.searchQuery.toLowerCase();
-                    result = this.services.filter(s => 
-                        s.name.toLowerCase().includes(q) || 
-                        s.desc.toLowerCase().includes(q) ||
-                        s.category.toLowerCase().includes(q)
-                    );
+                    list = this.services.filter(s => s.name.toLowerCase().includes(q));
                 } else {
-                    result = this.services.filter(s => s.category === this.currentCategory);
+                    list = this.services.filter(s => s.category === this.currentCategory);
                 }
 
-                // 2. Затем сортируем полученный список
-                const list = [...result];
-                if (this.sortBy === 'price_asc') {
-                    list.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
-                } else if (this.sortBy === 'price_desc') {
-                    list.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
-                } else if (this.sortBy === 'name') {
-                    list.sort((a, b) => a.name.localeCompare(b.name));
-                }
+                const result = [...list];
+                if (this.sortBy === 'price_asc') result.sort((a, b) => parseFloat(a.price) - parseFloat(b.price));
+                else if (this.sortBy === 'price_desc') result.sort((a, b) => parseFloat(b.price) - parseFloat(a.price));
+                else if (this.sortBy === 'name') result.sort((a, b) => a.name.localeCompare(b.name));
                 
-                return list;
+                return result;
+            },
+            // УМНОЕ ВРЕМЯ: скрываем то, что уже прошло
+            filteredTimeSlots() {
+                const slots = [];
+                for (let h = 10; h <= 20; h++) {
+                    slots.push(`${h}:00`, `${h}:30`);
+                }
+
+                if (this.form.date === this.serverToday) {
+                    const now = new Date();
+                    const currentTotalMinutes = now.getHours() * 60 + now.getMinutes();
+                    
+                    return slots.filter(slot => {
+                        const [h, m] = slot.split(':').map(Number);
+                        const slotTotalMinutes = h * 60 + m;
+                        // Показываем только если до времени слота еще хотя бы 30 минут
+                        return slotTotalMinutes > (currentTotalMinutes + 30);
+                    });
+                }
+                return slots;
             }
         },
         methods: {
@@ -246,19 +258,50 @@
                     this.services = data.services || [];
                     this.bookedCounts = data.bookedCounts || {};
                     this.maxBookings = data.maxBookings;
+                    this.serverToday = data.serverToday;
+                    this.form.date = data.serverToday; // По умолчанию сегодня
+                    
+                    this.generateAvailableDates();
                     this.loading = false;
                 } catch (e) {
                     alert("Ошибка загрузки данных!");
                 }
             },
+            generateAvailableDates() {
+                const dates = [];
+                const daysOfWeek = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"];
+                
+                // Берем текущую дату с сервера
+                const [d, m, y] = this.serverToday.split('.').map(Number);
+                const baseDate = new Date(y, m - 1, d);
+
+                for (let i = 0; i < 7; i++) {
+                    const targetDate = new Date(baseDate);
+                    targetDate.setDate(baseDate.getDate() + i);
+                    
+                    const dd = String(targetDate.getDate()).padStart(2, '0');
+                    const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+                    const yyyy = targetDate.getFullYear();
+                    const dateStr = `${dd}.${mm}.${yyyy}`;
+                    
+                    let label = "";
+                    if (i === 0) label = "Сегодня";
+                    else if (i === 1) label = "Завтра";
+                    else label = `${dd}.${mm} (${daysOfWeek[targetDate.getDay()]})`;
+                    
+                    dates.push({ label, value: dateStr });
+                }
+                this.availableDates = dates;
+            },
             isSlotFull(slot) {
                 if (this.maxBookings === 0) return true;
-                return (this.bookedCounts[slot] || 0) >= this.maxBookings;
+                const dayCounts = this.bookedCounts[this.form.date] || {};
+                return (dayCounts[slot] || 0) >= this.maxBookings;
             },
             openCategory(cat) { 
                 this.currentCategory = cat; 
                 this.view = 'services'; 
-                this.searchQuery = ''; // Сбрасываем поиск при входе в категорию
+                this.searchQuery = '';
                 window.scrollTo(0,0);
             },
             openDetails(s) { 
@@ -270,13 +313,8 @@
                 this.view = 'categories';
                 this.sortBy = 'default';
             },
-            generateSlots() {
-                for (let h = 10; h <= 20; h++) {
-                    this.timeSlots.push(`${h}:00`, `${h}:30`);
-                }
-            },
             async submitBooking() {
-                if (!this.form.name || !this.form.phone) return alert("Заполните данные!");
+                if (!this.form.name || !this.form.phone || !this.form.time) return alert("Заполните все данные!");
                 this.submitting = true;
                 try {
                     await fetch(API_URL, {
@@ -284,7 +322,7 @@
                         mode: 'no-cors',
                         body: JSON.stringify({...this.form, service: this.selectedService.name})
                     });
-                    alert("Запись создана! Мы получили ваше уведомление.");
+                    alert("Запись успешно создана!");
                     if (window.Telegram.WebApp) window.Telegram.WebApp.close();
                 } catch (e) { alert("Ошибка при отправке"); }
                 finally { this.submitting = false; }
@@ -295,7 +333,6 @@
                 window.Telegram.WebApp.ready();
                 window.Telegram.WebApp.expand();
             }
-            this.generateSlots();
             this.fetchData();
         }
     }).mount('#app');
@@ -303,4 +340,3 @@
 
 </body>
 </html>
-
