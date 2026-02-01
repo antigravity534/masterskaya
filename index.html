@@ -43,9 +43,6 @@
             <button class="btn" @click="masterView = 'create_order'">Создать запись</button>
             <button class="btn" @click="loadMasterWork">Текущая работа</button>
             <button class="btn" @click="toggleClientMode" style="background: #666;">Посмотреть каталог</button>
-            <button class="btn" @click="masterView = 'check_status'" style="background: #666; margin-bottom: 20px;">
-    🔍 Узнать статус заказа
-</button>
         </div>
 
         <div v-if="masterView === 'take_id'">
@@ -99,6 +96,9 @@
         <div v-if="masterView === 'check_status'">
             <div class="back-link" @click="masterView = 'menu'; checkResult = null; checkId = '';">← В меню</div>
             <h2>Проверка заказа</h2>
+            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
+    🔍 Узнать статус заказа
+</button>
             <input v-model="checkId" type="tel" maxlength="3" placeholder="ID (3 цифры)">
             <button class="btn" @click="checkOrderStatus" :disabled="checkId.length < 3">Проверить</button>
             
@@ -129,23 +129,23 @@
                 <div style="font-size:0.9em; color:#999">{{ s.desc }}</div>
                 <div style="color:#248bed; font-weight:bold">{{ s.price }} руб.</div>
             </div>
-                        <!-- ЭКРАН ПРОВЕРКИ СТАТУСА -->
-            <div v-if="view === 'check_status'">
-                <div class="back-link" @click="view = 'categories'; checkResult = null; checkId = '';">← Назад</div>
-                <h2>Проверка заказа</h2>
-                <p>Введите 3-значный номер вашего заказа:</p>
-                <input v-model="checkId" type="tel" maxlength="3" placeholder="Например: 123">
-                <button class="btn" @click="checkOrderStatus" :disabled="checkId.length < 3">Проверить</button>
+        </div>
+                       <!-- ЭКРАН ПРОВЕРКИ СТАТУСА -->
+         <div v-if="view === 'check_status'">
+            <div class="back-link" @click="view = 'categories'; checkResult = null; checkId = '';">← Назад</div>
+            <h2>Проверка заказа</h2>
+            <p>Введите 3-значный номер вашего заказа:</p>
+            <input v-model="checkId" type="tel" maxlength="3" placeholder="Например: 123">
+            <button class="btn" @click="checkOrderStatus" :disabled="checkId.length < 3">Проверить</button>
             
-                <div v-if="checkResult" class="card" style="margin-top: 20px; border: 1px solid var(--btn-bg-color);">
-                    <div v-if="checkResult.status === 'ok'">
-                        <p><b>Услуга:</b> {{ checkResult.order.service }}</p>
-                        <p><b>Дата/Время:</b> {{ checkResult.order.date }} в {{ checkResult.order.time }}</p>
-                        <p><b>Статус:</b> <span style="color: var(--btn-bg-color); font-weight: bold;">{{ checkResult.order.status }}</span></p>
-                    </div>
-                    <div v-else style="color: red;">
-                        {{ checkResult.message }}
-                    </div>
+            <div v-if="checkResult" class="card" style="margin-top: 20px; border: 1px solid var(--btn-bg-color);">
+                <div v-if="checkResult.status === 'ok'">
+                    <p><b>Услуга:</b> {{ checkResult.order.service }}</p>
+                    <p><b>Дата/Время:</b> {{ checkResult.order.date }} в {{ checkResult.order.time }}</p>
+                    <p><b>Статус:</b> <span style="color: var(--btn-bg-color); font-weight: bold;">{{ checkResult.order.status }}</span></p>
+                </div>
+                <div v-else style="color: red;">
+                    {{ checkResult.message }}
                 </div>
             </div>
         </div>
@@ -364,6 +364,7 @@
 
 </body>
 </html>
+
 
 
 
