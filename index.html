@@ -3,30 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Мастерская</title>
+    <title>Мастерская Электротранспорта</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* --- НАСТРОЙКИ ЦВЕТОВ --- */
         :root {
-            --btn-bg-color: #248bed; --btn-text-color: #ffffff;
-            --bg-color: #ffffff; --text-color: #000000;
-            --secondary-bg: #efeff4; --hint-color: #999999;
+            --btn-bg-color: #248bed;       /* Цвет заливки кнопок */
+            --btn-text-color: #ffffff;     /* Цвет текста на кнопках */
+            --bg-color: #ffffff;           /* Основной фон сайта */
+            --text-color: #000000;         /* Основной цвет текста */
+            --secondary-bg: #efeff4;       /* Фон карточек и инпутов */
+            --hint-color: #999999;         /* Цвет подсказок */
         }
+
         [v-cloak] { display: none; }
-        body { font-family: sans-serif; background: var(--bg-color); color: var(--text-color); margin: 0; padding: 15px; }
-        h2 { margin-top: 5px; margin-bottom: 15px; }
-        input, select {
-            width: 100%; padding: 12px; margin: 8px 0 16px;
-            border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
-            background: var(--secondary-bg); color: var(--text-color);
-            font-size: 16px; box-sizing: border-box; display: block; outline: none;
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0; padding: 15px;
+            padding-top: 10px;
         }
+
+        h2 { margin-top: 5px; margin-bottom: 15px; }
+
+        /* Унифицированные стили для всех полей (Имя, Телефон, Селекты) */
+        input, select {
+            width: 100%; 
+            padding: 12px; 
+            margin: 8px 0 16px;
+            border: 1px solid rgba(0,0,0,0.1); 
+            border-radius: 10px;
+            background: var(--secondary-bg); 
+            color: var(--text-color);
+            font-size: 16px; 
+            box-sizing: border-box;
+            display: block;
+            outline: none;
+        }
+
         .card { background: var(--secondary-bg); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
-        .btn { background: var(--btn-bg-color); color: var(--btn-text-color); border: none; width: 100%; padding: 14px; border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px; }
+        
+        .btn { 
+            background: var(--btn-bg-color); 
+            color: var(--btn-text-color); 
+            border: none; 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-bottom: 10px; 
+        }
         .btn:disabled { opacity: 0.5; }
+
         .back-link { color: var(--btn-bg-color); cursor: pointer; margin-bottom: 15px; display: block; font-weight: bold; }
+        
         .master-menu { display: grid; gap: 10px; }
         .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #fff; background: #666; margin-bottom: 5px; }
+        
+        .search-input { margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -34,7 +72,7 @@
 <div id="app" v-cloak>
     <div v-if="loading" style="text-align:center; padding-top:50px;">Загрузка...</div>
 
-    <!-- ИНТЕРФЕЙС МАСТЕРА -->
+    <!-- 1. ИНТЕРФЕЙС МАСТЕРА -->
     <div v-else-if="isMasterMode">
         <h2>👨‍🔧 Мастер: {{ masterName }}</h2>
         
@@ -88,51 +126,46 @@
         </div>
     </div>
 
-    <!-- ИНТЕРФЕЙС КЛИЕНТА -->
+    <!-- 2. ИНТЕРФЕЙС КЛИЕНТА -->
     <div v-else>
-        <div v-if="isMasterUser" style="background: #333; color: #fff; padding: 5px; font-size: 12px; cursor: pointer; text-align: center; margin-bottom: 10px;" @click="toggleClientMode">
+        <!-- Системная кнопка для мастера, зашедшего как клиент -->
+        <div v-if="isMasterUser" style="background: #333; color: #fff; padding: 10px; font-size: 12px; cursor: pointer; text-align: center; margin-bottom: 10px; border-radius: 8px;" @click="toggleClientMode">
             ⚙️ Вернуться в режим мастера
-            <!-- ЭКРАН ПРОВЕРКИ СТАТУСА ДЛЯ МАСТЕРА -->
-        <div v-if="masterView === 'check_status'">
-            <div class="back-link" @click="masterView = 'menu'; checkResult = null; checkId = '';">← В меню</div>
-            <h2>Проверка заказа</h2>
-            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
-    🔍 Узнать статус заказа
-</button>
-            <input v-model="checkId" type="tel" maxlength="3" placeholder="ID (3 цифры)">
-            <button class="btn" @click="checkOrderStatus" :disabled="checkId.length < 3">Проверить</button>
-            
-            <div v-if="checkResult" class="card" style="margin-top: 20px; border: 1px solid var(--btn-bg-color);">
-                <div v-if="checkResult.status === 'ok'">
-                    <p><b>Статус:</b> {{ checkResult.order.status }}</p>
-                    <p><b>Услуга:</b> {{ checkResult.order.service }}</p>
-                </div>
-                <div v-else style="color: red;">{{ checkResult.message }}</div>
-            </div>
-        </div>
         </div>
 
-        <div v-if="view !== 'details'">
+        <!-- Поиск и основное меню -->
+        <div v-if="view !== 'details' && view !== 'check_status'">
             <h2>{{ isSearching ? 'Поиск' : (view === 'categories' ? 'Каталог' : currentCategory) }}</h2>
+            
+            <!-- Кнопка проверки (только на главном экране) -->
+            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
+                🔍 Узнать статус заказа
+            </button>
+
             <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу...">
         </div>
 
+        <!-- Список категорий -->
         <div v-if="view === 'categories' && !isSearching">
-            <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)"><strong>{{ cat }}</strong></div>
+            <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)">
+                <strong>{{ cat }}</strong>
+            </div>
         </div>
 
+        <!-- Список услуг -->
         <div v-if="view === 'services' || isSearching">
             <div v-if="!isSearching" class="back-link" @click="goBack">← Назад</div>
             <div v-else class="back-link" @click="searchQuery = ''">✕ Сбросить поиск</div>
             <div v-for="s in displayedServices" :key="s.name" class="card" @click="openDetails(s)">
                 <strong>{{ s.name }}</strong>
-                <div style="font-size:0.9em; color:#999">{{ s.desc }}</div>
-                <div style="color:#248bed; font-weight:bold">{{ s.price }} руб.</div>
+                <div style="font-size:0.9em; color:var(--hint-color)">{{ s.desc }}</div>
+                <div style="color:var(--btn-bg-color); font-weight:bold">{{ s.price }} руб.</div>
             </div>
         </div>
-                       <!-- ЭКРАН ПРОВЕРКИ СТАТУСА -->
-         <div v-if="view === 'check_status'">
-            <div class="back-link" @click="view = 'categories'; checkResult = null; checkId = '';">← Назад</div>
+
+        <!-- ЭКРАН ПРОВЕРКИ СТАТУСА (ДЛЯ КЛИЕНТА) -->
+        <div v-if="view === 'check_status'">
+            <div class="back-link" @click="view = 'categories'; checkResult = null; checkId = '';">← Назад к каталогу</div>
             <h2>Проверка заказа</h2>
             <p>Введите 3-значный номер вашего заказа:</p>
             <input v-model="checkId" type="tel" maxlength="3" placeholder="Например: 123">
@@ -144,20 +177,35 @@
                     <p><b>Дата/Время:</b> {{ checkResult.order.date }} в {{ checkResult.order.time }}</p>
                     <p><b>Статус:</b> <span style="color: var(--btn-bg-color); font-weight: bold;">{{ checkResult.order.status }}</span></p>
                 </div>
-                <div v-else style="color: red;">
-                    {{ checkResult.message }}
-                </div>
+                <div v-else style="color: #dc3545; font-weight: bold;">{{ checkResult.message }}</div>
             </div>
         </div>
 
+        <!-- ЭКРАН ОФОРМЛЕНИЯ -->
         <div v-if="view === 'details'">
             <div class="back-link" @click="view = 'services'">← Назад</div>
             <h2>{{ selectedService.name }}</h2>
-            <p style="font-size:0.9em; color:#999">{{ selectedService.desc }}</p>
-            <label>День:</label><select v-model="form.date"><option v-for="d in availableDates" :value="d.value">{{ d.label }}</option></select>
-            <label>Время:</label><select v-model="form.time"><option v-if="filteredTimeSlots.length === 0" disabled>Нет времени</option><option v-for="s in filteredTimeSlots" :value="s" :disabled="isSlotFull(s)">{{ s }} {{ isSlotFull(s)?'(занято)':''}}</option></select>
-            <label>Имя:</label><input v-model="form.name">
-            <label>Телефон:</label><input v-model="form.phoneDisplay" @input="handlePhoneInput" placeholder="+7...">
+            <p style="font-size:0.9em; color:var(--hint-color)">{{ selectedService.desc }}</p>
+            
+            <label>День:</label>
+            <select v-model="form.date">
+                <option v-for="d in availableDates" :value="d.value">{{ d.label }}</option>
+            </select>
+
+            <label>Время:</label>
+            <select v-model="form.time">
+                <option v-if="filteredTimeSlots.length === 0" disabled>Нет времени</option>
+                <option v-for="s in filteredTimeSlots" :value="s" :disabled="isSlotFull(s)">
+                    {{ s }} {{ isSlotFull(s) ? '(занято)' : '' }}
+                </option>
+            </select>
+
+            <label>Ваше имя:</label>
+            <input v-model="form.name" placeholder="Иван">
+
+            <label>Телефон:</label>
+            <input v-model="form.phoneDisplay" @input="handlePhoneInput" placeholder="+7...">
+            
             <button class="btn" @click="submitBooking" :disabled="submitting || !form.time">Подтвердить запись</button>
         </div>
     </div>
@@ -175,9 +223,8 @@
                 searchQuery: '', sortBy: 'default', serverToday: '',
                 form: { name: '', phoneDisplay: '+7 ', time: '', date: '', service: '' },
                 availableDates: [],
-                checkId: '',          // ID, который вводит пользователь
-                checkResult: null,    // Сюда запишем ответ от сервера
-                
+                checkId: '',          
+                checkResult: null,    
                 isMasterUser: false, isMasterMode: false, masterName: '', masterView: 'menu',
                 targetId: '', masterServiceSearch: '', masterWorks: [], tgId: null
             }
@@ -204,14 +251,12 @@
             }
         },
         methods: {
-            // === НОВАЯ ФУНКЦИЯ ДЛЯ API (GET ЗАПРОСЫ) ===
             async apiGet(params) {
                 const url = new URL(API_URL);
                 Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
                 const r = await fetch(url);
                 return await r.json();
             },
-            // Добавить в methods
             async checkOrderStatus() {
                 this.loading = true;
                 try {
@@ -223,19 +268,15 @@
                     this.loading = false;
                 }
             },
-
             async fetchData() {
                 try {
                     const uid = this.tgId;
-                    // Используем apiGet для загрузки
                     const data = await this.apiGet({ userId: uid || '' });
-                    
                     this.services = data.services || [];
                     this.bookedCounts = data.bookedCounts || {};
                     this.maxBookings = data.maxBookings;
                     this.serverToday = data.serverToday;
                     this.form.date = data.serverToday; 
-                    
                     if (data.userRole === 'master') {
                         this.isMasterUser = true;
                         this.isMasterMode = true;
@@ -245,42 +286,27 @@
                     this.loading = false;
                 } catch (e) { alert("Ошибка загрузки!"); }
             },
-            
-            // --- МЕТОДЫ МАСТЕРА (ТЕПЕРЬ ЧЕРЕЗ GET) ---
             toggleClientMode() { this.isMasterMode = !this.isMasterMode; },
-
             async takeOrder() {
                 if (!this.targetId || this.targetId.length !== 3) return alert("Введите 3 цифры ID");
                 this.loading = true;
-                // Добавили masterId: this.tgId
                 const res = await this.apiGet({ 
-                    action: 'take_order', 
-                    orderId: this.targetId, 
-                    masterName: this.masterName,
-                    masterId: this.tgId 
+                    action: 'take_order', orderId: this.targetId, masterName: this.masterName, masterId: this.tgId 
                 });
                 this.loading = false;
                 if (res.status === 'ok') { alert("Заказ взят!"); this.masterView = 'menu'; this.targetId = ''; }
                 else alert(res.message);
             },
-            
             async createMasterOrder() {
                 if (!this.form.name || !this.form.phoneDisplay || !this.form.service) return alert("Заполните поля");
                 const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
                 this.loading = true;
-                // Добавили masterId: this.tgId
                 const res = await this.apiGet({ 
-                    action: 'create_master_order', 
-                    name: this.form.name, 
-                    phone: rawPhone, 
-                    service: this.form.service, 
-                    masterName: this.masterName,
-                    masterId: this.tgId 
+                    action: 'create_master_order', name: this.form.name, phone: rawPhone, service: this.form.service, masterName: this.masterName, masterId: this.tgId 
                 });
                 this.loading = false;
                 if (res.status === 'ok') { alert("Заказ создан и взят в работу!"); this.masterView = 'menu'; }
             },
-            
             async loadMasterWork() {
                 this.loading = true;
                 const res = await this.apiGet({ action: 'get_master_work', masterName: this.masterName });
@@ -290,7 +316,6 @@
                     this.masterView = 'current_work';
                 }
             },
-            
             async updateStatus(work) {
                 if (work.status === work.newStatus) return;
                 const res = await this.apiGet({ action: 'update_status', row: work.row, newStatus: work.newStatus });
@@ -299,8 +324,6 @@
                     if (work.newStatus === 'Готово') alert("Статус обновлен. Запись исчезнет через 5 минут.");
                 }
             },
-            
-            // ... Вспомогательные ...
             selectMasterService(s) { this.form.service = s.name; this.masterServiceSearch = ''; },
             getStatusColor(s) {
                 if (s === 'В работе') return '#007bff';
@@ -315,8 +338,7 @@
                 this.form.phoneDisplay = f;
             },
             generateAvailableDates() { 
-                const dates = []; const now = new Date();
-                const [d, m, y] = this.serverToday.split('.').map(Number);
+                const dates = []; const [d, m, y] = this.serverToday.split('.').map(Number);
                 const base = new Date(y, m-1, d);
                 for(let i=0; i<7; i++) {
                     const temp = new Date(base); temp.setDate(base.getDate()+i);
@@ -329,23 +351,16 @@
             openCategory(cat) { this.currentCategory = cat; this.view = 'services'; this.searchQuery = ''; window.scrollTo(0,0); },
             openDetails(s) { this.selectedService = s; this.view = 'details'; window.scrollTo(0,0); },
             goBack() { this.view = 'categories'; },
-            
-            // Клиентская запись (POST no-cors)
             async submitBooking() {
                 if (!this.form.name || !this.form.phoneDisplay || !this.form.time) return alert("Заполните данные!");
                 const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
                 this.submitting = true;
-                
                 await fetch(API_URL, {
                     method: 'POST', mode: 'no-cors',
                     body: JSON.stringify({
-                        action: 'book',
-                        date: this.form.date, time: this.form.time,
-                        service: this.selectedService.name, price: this.selectedService.price,
-                        name: this.form.name, phone: rawPhone, tgId: this.tgId
+                        action: 'book', date: this.form.date, time: this.form.time, service: this.selectedService.name, name: this.form.name, phone: rawPhone, tgId: this.tgId
                     })
                 });
-
                 this.submitting = false;
                 alert("Запись создана!");
                 window.Telegram.WebApp.close();
@@ -364,7 +379,3 @@
 
 </body>
 </html>
-
-
-
-
