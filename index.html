@@ -321,7 +321,13 @@
             },
             async updateStatus(work) {
                 if (work.status === work.newStatus) return;
-                const res = await this.apiGet({ action: 'update_status', row: work.row, newStatus: work.newStatus });
+                // Добавили masterName: this.masterName
+                const res = await this.apiGet({ 
+                    action: 'update_status', 
+                    row: work.row, 
+                    newStatus: work.newStatus,
+                    masterName: this.masterName 
+                });
                 if (res.status === 'ok') {
                     work.status = work.newStatus;
                     if (work.newStatus === 'Готово') alert("Статус обновлен. Запись исчезнет через 5 минут.");
@@ -382,4 +388,5 @@
 
 </body>
 </html>
+
 
