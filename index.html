@@ -152,7 +152,7 @@
             <h2>{{ isSearching ? 'Поиск' : (view === 'categories' ? 'Каталог' : currentCategory) }}</h2>
             
             <!-- Кнопка проверки (только на главном экране) -->
-            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
+            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: var(--btn-bg-color); margin-bottom: 20px;">
                 🔍 Узнать статус заказа
             </button>
 
@@ -467,6 +467,7 @@
 
 </body>
 </html>
+
 
 
 
