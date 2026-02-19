@@ -14,7 +14,7 @@
             --bg-color: #FEFFEE;           /* Основной фон сайта */
             --text-color: #C90415;         /* Основной цвет текста */
             --secondary-bg: #CCCCBB;       /* Фон карточек и инпутов */
-            --hint-color: #946B6B;         /* Цвет подсказок, цен */
+            --hint-color: #735353;         /* Цвет подсказок, цен */
         }
 
         [v-cloak] { display: none; }
@@ -155,8 +155,8 @@
             <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: var(--btn-bg-color); margin-bottom: 20px;">
                 🔍 Узнать статус заказа
             </button>
-
-            <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу..." style="margin-bottom: 20px;">
+            
+         <!--   <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу..." style="margin-bottom: 20px;"> -->
         </div>
 
         <!-- Список категорий -->
@@ -467,6 +467,7 @@
 
 </body>
 </html>
+
 
 
 
