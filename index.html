@@ -9,15 +9,13 @@
     <style>
         /* --- НАСТРОЙКИ ЦВЕТОВ --- */
         :root {
-            --btn-bg-color: #BDBDAD;       /* Цвет заливки кнопок */
-            --btn-text-color: #C90415;     /* Цвет текста на кнопках */
-            --bg-color: #FEFFEE;           /* Основной фон сайта */
-            --text-color: #C90415;         /* Основной цвет текста */
-            --secondary-bg: #CCCCBB;       /* Фон карточек и инпутов */
-            --hint-color: #735353;         /* Цвет подсказок, цен */
-        }
-
-        [v-cloak] { display: none; }
+            --btn-bg-color: #C90415;       /* Главный красный для кнопок */
+            --btn-text-color: #ffffff;     /* Белый текст на кнопках для контраста */
+            --bg-color: #ffffff;           /* Чистый белый фон для читаемости */
+            --text-color: #C90415;         /* Основной красный цвет текста (по ТЗ) */
+            --secondary-bg: #fff0f0;       /* Бледно-красный фон для карточек и полей */
+            --hint-color: #a3494f;         /* Приглушенный темно-красный для подсказок */
+        } { display: none; }
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -34,7 +32,7 @@
             width: 100%; 
             padding: 12px; 
             margin: 8px 0 16px;
-            border: 1px solid rgba(0,0,0,0.1); 
+            border: 1px solid rgba(201, 4, 21, 0.2); /* Легкая красная рамка */
             border-radius: 10px;
             background: var(--secondary-bg); 
             color: var(--text-color);
@@ -63,7 +61,7 @@
         .back-link { color: var(--btn-bg-color); cursor: pointer; margin-bottom: 15px; display: block; font-weight: bold; }
         
         .master-menu { display: grid; gap: 10px; }
-        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #fff; background: #666; margin-bottom: 5px; }
+        .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #fff; background: var(--hint-color); margin-bottom: 5px; }
         
         .search-input { margin-bottom: 20px; }
     </style>
@@ -81,7 +79,7 @@
             <button class="btn" @click="masterView = 'take_id'">Взять ID в работу</button>
             <button class="btn" @click="masterView = 'create_order'">Создать запись</button>
             <button class="btn" @click="loadMasterWork">Текущая работа</button>
-            <button class="btn" @click="toggleClientMode" style="background: var(--btn-bg-color);">Посмотреть каталог</button>
+            <button class="btn" @click="toggleClientMode" style="background: var(--hint-color);">Посмотреть каталог</button>
         </div>
 
         <div v-if="masterView === 'take_id'">
@@ -116,20 +114,19 @@
                 <p><b>Тел:</b> {{ work.phone }}</p>
                 <p><b>Услуга:</b> {{ work.service }}</p>
                 
-                <p v-if="work.desc" style="margin-top:5px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 5px;">
+                <p v-if="work.desc" style="margin-top:5px; background: rgba(201, 4, 21, 0.05); padding: 5px; border-radius: 5px;">
                     <b>📝 Инфо:</b> {{ work.desc }}
                 </p>
                 
                 <div v-if="work.photo && work.photo.startsWith('http')" style="margin-top: 10px; margin-bottom: 10px;">
-                    <!-- Показываем миниатюру -->
-                    <img :src="work.photo" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;">
+                    <img :src="work.photo" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid rgba(201,4,21,0.2);">
                     
                     <a :href="work.photo" target="_blank" style="display: block; margin-top: 5px; color: var(--btn-bg-color); text-decoration: none; font-weight: bold; text-align: center;">
                         🔍 Открыть оригинал
                     </a>
                 </div>
 
-                <hr style="border:0; border-top:1px solid #ddd; margin: 10px 0;">
+                <hr style="border:0; border-top:1px solid rgba(201,4,21,0.2); margin: 10px 0;">
                 <label>Сменить статус:</label>
                 <select v-model="work.newStatus" @change="updateStatus(work)">
                     <option>В очереди</option>
@@ -143,30 +140,26 @@
 
     <!-- 2. ИНТЕРФЕЙС КЛИЕНТА -->
     <div v-else>
-        <div v-if="isMasterUser" style="background: #333; color: #fff; padding: 10px; font-size: 12px; cursor: pointer; text-align: center; margin-bottom: 10px; border-radius: 8px;" @click="toggleClientMode">
+        <div v-if="isMasterUser" style="background: var(--hint-color); color: #fff; padding: 10px; font-size: 12px; cursor: pointer; text-align: center; margin-bottom: 10px; border-radius: 8px;" @click="toggleClientMode">
             ⚙️ Вернуться в режим мастера
         </div>
 
-        <!-- Поиск и основное меню -->
         <div v-if="view !== 'details' && view !== 'check_status'">
             <h2>{{ isSearching ? 'Поиск' : (view === 'categories' ? 'Каталог' : currentCategory) }}</h2>
             
-            <!-- Кнопка проверки (только на главном экране) -->
-            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: var(--btn-bg-color); margin-bottom: 20px;">
+            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: var(--hint-color); margin-bottom: 20px;">
                 🔍 Узнать статус заказа
             </button>
-            
-         <!--   <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу..." style="margin-bottom: 20px;"> -->
+
+            <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу...">
         </div>
 
-        <!-- Список категорий -->
         <div v-if="view === 'categories' && !isSearching">
             <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)">
                 <strong>{{ cat }}</strong>
             </div>
         </div>
 
-        <!-- Список услуг -->
         <div v-if="view === 'services' || isSearching">
             <div v-if="!isSearching" class="back-link" @click="goBack">← Назад</div>
             <div v-else class="back-link" @click="searchQuery = ''">✕ Сбросить поиск</div>
@@ -177,7 +170,6 @@
             </div>
         </div>
 
-        <!-- Экран проверки статуса -->
         <div v-if="view === 'check_status'">
             <div class="back-link" @click="view = 'categories'; checkResult = null; checkId = '';">← Назад к каталогу</div>
             <h2>Проверка заказа</h2>
@@ -195,7 +187,6 @@
             </div>
         </div>
 
-        <!-- Экран оформления -->
         <div v-if="view === 'details'">
             <div class="back-link" @click="view = 'services'">← Назад</div>
             <h2>{{ selectedService.name }}</h2>
@@ -208,7 +199,7 @@
 
             <label>Время:</label>
             <select v-model="form.time">
-                <option v-if="filteredTimeSlots.length === 0" disabled>Сегодня мастерская закрыта - попробуйте выбрать другой день</option>
+                <option v-if="filteredTimeSlots.length === 0" disabled>Нет времени на сегодня</option>
                 <option v-for="s in filteredTimeSlots" :value="s" :disabled="isSlotFull(s)">
                     {{ s }} {{ isSlotFull(s) ? '(занято)' : '' }}
                 </option>
@@ -227,7 +218,7 @@
             <label>Фото поломки (необязательно):</label>
             <div style="margin-bottom: 20px;">
                 <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" style="display: none;">
-                <button class="btn" @click="$refs.fileInput.click()" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid rgba(0,0,0,0.1);">
+                <button class="btn" @click="$refs.fileInput.click()" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid rgba(201,4,21,0.2);">
                     {{ form.photoName ? '📷 Файл выбран' : '📷 Прикрепить фото' }}
                 </button>
                 <div v-if="form.photoName" style="text-align: center; font-size: 14px; margin-top: 5px;">
@@ -248,36 +239,36 @@
         data() {
             return {
                 view: 'categories', loading: true, submitting: false,
-                services: [], bookedCounts: {}, maxBookings: 1, currentCategory: '', selectedService: null,
+                services:[], bookedCounts: {}, maxBookings: 1, currentCategory: '', selectedService: null,
                 searchQuery: '', sortBy: 'default', serverToday: '',
                 form: { 
                     name: '', phoneDisplay: '+7 ', time: '', date: '', service: '', 
                     desc: '', photoBase64: '', photoMime: '', photoName: '' 
                 },
-                availableDates: [],
+                availableDates:[],
                 checkId: '',          
                 checkResult: null,    
                 isMasterUser: false, isMasterMode: false, masterName: '', masterView: 'menu',
-                targetId: '', masterServiceSearch: '', masterWorks: [], tgId: null
+                targetId: '', masterServiceSearch: '', masterWorks:[], tgId: null
             }
         },
         computed: {
             isSearching() { return this.searchQuery.trim().length > 0; },
-            uniqueCategories() { return [...new Set(this.services.map(s => s.category))]; },
+            uniqueCategories() { return; },
             displayedServices() {
                 let list = this.isSearching ? this.services.filter(s => s.name.toLowerCase().includes(this.searchQuery.toLowerCase())) : this.services.filter(s => s.category === this.currentCategory);
                 return list;
             },
             filteredTimeSlots() {
-                 const slots = []; for (let h=9; h<=19; h++) slots.push(`${h}:00`, `${h}:30`);
+                 const slots =[]; for (let h=9; h<=19; h++) slots.push(`${h}:00`, `${h}:30`);
                  if (this.form.date === this.serverToday) {
                     const now = new Date(); const min = now.getHours()*60+now.getMinutes();
-                    return slots.filter(s => { const [h,m]=s.split(':').map(Number); return (h*60+m)>(min+30); });
+                    return slots.filter(s => { const=s.split(':').map(Number); return (h*60+m)>(min+30); });
                  }
                  return slots;
             },
             filteredServicesMaster() {
-                if(!this.masterServiceSearch) return [];
+                if(!this.masterServiceSearch) return[];
                 const q = this.masterServiceSearch.toLowerCase();
                 return this.services.filter(s => s.name.toLowerCase().includes(q));
             }
@@ -285,7 +276,7 @@
         methods: {
             async apiGet(params) {
                 const url = new URL(API_URL);
-                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                Object.keys(params).forEach(key => url.searchParams.append(key, params));
                 const r = await fetch(url);
                 return await r.json();
             },
@@ -304,9 +295,8 @@
                 }
             },
 
-            // --- ФОТО И ФАЙЛЫ ---
             handleFileUpload(e) {
-                const file = e.target.files[0];
+                const file = e.target.files;
                 if (!file) return;
                 if (file.size > 10 * 2048 * 2048) return alert("Файл слишком большой (макс 10МБ)");
                 
@@ -315,7 +305,7 @@
                 
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    this.form.photoBase64 = event.target.result.split(',')[1];
+                    this.form.photoBase64 = event.target.result.split(',');
                 };
                 reader.readAsDataURL(file);
             },
@@ -330,7 +320,7 @@
                 try {
                     const uid = this.tgId;
                     const data = await this.apiGet({ userId: uid || '' });
-                    this.services = data.services || [];
+                    this.services = data.services ||[];
                     this.bookedCounts = data.bookedCounts || {};
                     this.maxBookings = data.maxBookings;
                     this.serverToday = data.serverToday;
@@ -395,7 +385,7 @@
                 if (s === 'В работе') return '#007bff';
                 if (s === 'Готово') return '#28a745';
                 if (s === 'Требуется присутствие') return '#dc3545';
-                return '#666';
+                return 'var(--hint-color)';
             },
             handlePhoneInput(e) {
                 let val = e.target.value.replace(/\D/g, '');
@@ -404,7 +394,7 @@
                 this.form.phoneDisplay = f;
             },
             generateAvailableDates() { 
-                const dates = []; const [d, m, y] = this.serverToday.split('.').map(Number);
+                const dates = []; const = this.serverToday.split('.').map(Number);
                 const base = new Date(y, m-1, d);
                 for(let i=0; i<7; i++) {
                     const temp = new Date(base); temp.setDate(base.getDate()+i);
@@ -413,7 +403,7 @@
                 }
                 this.availableDates = dates;
             },
-            isSlotFull(slot) { const dayCounts = this.bookedCounts[this.form.date] || {}; return (dayCounts[slot] || 0) >= this.maxBookings; },
+            isSlotFull(slot) { const dayCounts = this.bookedCounts || {}; return (dayCounts || 0) >= this.maxBookings; },
             openCategory(cat) { this.currentCategory = cat; this.view = 'services'; this.searchQuery = ''; window.scrollTo(0,0); },
             openDetails(s) { this.selectedService = s; this.view = 'details'; window.scrollTo(0,0); },
             goBack() { this.view = 'categories'; },
@@ -441,9 +431,8 @@
                         })
                     });
                     
-                    // Обновляем локально слот
-                    if(!this.bookedCounts[this.form.date]) this.bookedCounts[this.form.date] = {};
-                    this.bookedCounts[this.form.date][this.form.time] = (this.bookedCounts[this.form.date][this.form.time]||0) + 1;
+                    if(!this.bookedCounts) this.bookedCounts = {};
+                    this.bookedCounts = (this.bookedCounts||0) + 1;
 
                     this.submitting = false;
                     alert("Запись создана!");
@@ -467,12 +456,3 @@
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
