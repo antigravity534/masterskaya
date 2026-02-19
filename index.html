@@ -3,17 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Мастерская</title>
+    <title>Мастерская Электротранспорта</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        /* --- НАСТРОЙКИ ЦВЕТОВ --- */
         :root {
-            --btn-bg-color: #248bed;       /* Цвет кнопок */
-            --btn-text-color: #ffffff;
-            --bg-color: #ffffff;           /* Фон */
-            --text-color: #000000;
-            --secondary-bg: #efeff4;       /* Фон полей */
-            --hint-color: #999999;
+            --btn-bg-color: #248bed;       /* Цвет заливки кнопок */
+            --btn-text-color: #ffffff;     /* Цвет текста на кнопках */
+            --bg-color: #ffffff;           /* Основной фон сайта */
+            --text-color: #000000;         /* Основной цвет текста */
+            --secondary-bg: #efeff4;       /* Фон карточек и инпутов */
+            --hint-color: #999999;         /* Цвет подсказок */
         }
 
         [v-cloak] { display: none; }
@@ -28,7 +29,7 @@
 
         h2 { margin-top: 5px; margin-bottom: 15px; }
 
-        /* Универсальные стили для полей ввода */
+        /* Унифицированные стили для всех полей (Имя, Телефон, Селекты) */
         input, select, textarea {
             width: 100%; 
             padding: 12px; 
@@ -49,8 +50,13 @@
         .btn { 
             background: var(--btn-bg-color); 
             color: var(--btn-text-color); 
-            border: none; width: 100%; padding: 14px; 
-            border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px; 
+            border: none; 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 10px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            margin-bottom: 10px; 
         }
         .btn:disabled { opacity: 0.5; }
 
@@ -58,6 +64,8 @@
         
         .master-menu { display: grid; gap: 10px; }
         .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #fff; background: #666; margin-bottom: 5px; }
+        
+        .search-input { margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -108,10 +116,10 @@
                 <p><b>Тел:</b> {{ work.phone }}</p>
                 <p><b>Услуга:</b> {{ work.service }}</p>
                 
-                <!-- Показ фото и описания мастеру -->
                 <p v-if="work.desc" style="margin-top:5px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 5px;">
                     <b>📝 Инфо:</b> {{ work.desc }}
                 </p>
+                
                 <div v-if="work.photo && work.photo.startsWith('http')" style="margin-top: 10px; margin-bottom: 10px;">
                     <a :href="work.photo" target="_blank" style="color: var(--btn-bg-color); text-decoration: none; font-weight: bold;">
                         📷 Открыть фото поломки
@@ -136,19 +144,20 @@
             ⚙️ Вернуться в режим мастера
         </div>
 
-        <!-- Поиск и заголовки -->
+        <!-- Поиск и основное меню -->
         <div v-if="view !== 'details' && view !== 'check_status'">
             <h2>{{ isSearching ? 'Поиск' : (view === 'categories' ? 'Каталог' : currentCategory) }}</h2>
-            <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу..." style="margin-bottom: 20px;">
-        </div>
-
-        <!-- Категории + Кнопка проверки -->
-        <div v-if="view === 'categories' && !isSearching">
-            <!-- КНОПКА ПРОВЕРКИ СТАТУСА (ДЛЯ КЛИЕНТА) -->
-            <button class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
+            
+            <!-- Кнопка проверки (только на главном экране) -->
+            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
                 🔍 Узнать статус заказа
             </button>
 
+            <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу..." style="margin-bottom: 20px;">
+        </div>
+
+        <!-- Список категорий -->
+        <div v-if="view === 'categories' && !isSearching">
             <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)">
                 <strong>{{ cat }}</strong>
             </div>
@@ -187,6 +196,7 @@
         <div v-if="view === 'details'">
             <div class="back-link" @click="view = 'services'">← Назад</div>
             <h2>{{ selectedService.name }}</h2>
+            <p style="font-size:0.9em; color:var(--hint-color)" v-if="selectedService.desc">{{ selectedService.desc }}</p>
             
             <label>День:</label>
             <select v-model="form.date">
@@ -207,7 +217,6 @@
             <label>Телефон:</label>
             <input v-model="form.phoneDisplay" @input="handlePhoneInput" placeholder="+7...">
 
-            <!-- НОВЫЕ ПОЛЯ: Описание и Фото -->
             <label>Описание проблемы (необязательно):</label>
             <textarea v-model="form.desc" maxlength="150" placeholder="Коротко опишите проблему..." style="resize: none; height: 80px;"></textarea>
             <div style="text-align: right; font-size: 12px; color: var(--hint-color); margin-bottom: 10px;">{{ form.desc.length }}/150</div>
