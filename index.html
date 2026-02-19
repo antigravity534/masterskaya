@@ -9,12 +9,12 @@
     <style>
         /* --- НАСТРОЙКИ ЦВЕТОВ --- */
         :root {
-            --btn-bg-color: #FEFFEE;       /* Цвет заливки кнопок */
+            --btn-bg-color: #A3A396;       /* Цвет заливки кнопок */
             --btn-text-color: #C90415;     /* Цвет текста на кнопках */
             --bg-color: #FEFFEE;           /* Основной фон сайта */
             --text-color: #C90415;         /* Основной цвет текста */
             --secondary-bg: #FEFFEE;       /* Фон карточек и инпутов */
-            --hint-color: #999999;         /* Цвет подсказок */
+            --hint-color: #A3A396;         /* Цвет подсказок */
         }
 
         [v-cloak] { display: none; }
@@ -269,7 +269,7 @@
                 return list;
             },
             filteredTimeSlots() {
-                 const slots = []; for (let h=9; h<=20; h++) slots.push(`${h}:00`, `${h}:30`);
+                 const slots = []; for (let h=9; h<=19; h++) slots.push(`${h}:00`, `${h}:30`);
                  if (this.form.date === this.serverToday) {
                     const now = new Date(); const min = now.getHours()*60+now.getMinutes();
                     return slots.filter(s => { const [h,m]=s.split(':').map(Number); return (h*60+m)>(min+30); });
@@ -467,6 +467,7 @@
 
 </body>
 </html>
+
 
 
 
