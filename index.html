@@ -15,9 +15,9 @@
             --text-color: #C90415;         /* Основной красный цвет текста (по ТЗ) */
             --secondary-bg: #fff0f0;       /* Бледно-красный фон для карточек и полей */
             --hint-color: #a3494f;         /* Приглушенный темно-красный для подсказок */
-        } { display: none; }
+    } { display: none; }
 
-        body {
+    body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg-color);
             color: var(--text-color);
@@ -394,7 +394,8 @@
                 this.form.phoneDisplay = f;
             },
             generateAvailableDates() { 
-                const dates = []; const = this.serverToday.split('.').map(Number);
+                const dates = []; 
+                const = this.serverToday.split('.').map(Number);
                 const base = new Date(y, m-1, d);
                 for(let i=0; i<7; i++) {
                     const temp = new Date(base); temp.setDate(base.getDate()+i);
@@ -456,3 +457,4 @@
 
 </body>
 </html>
+
