@@ -9,11 +9,11 @@
     <style>
         /* --- НАСТРОЙКИ ЦВЕТОВ --- */
         :root {
-            --btn-bg-color: #248bed;       /* Цвет заливки кнопок */
+            --btn-bg-color: #C90415;       /* Цвет заливки кнопок */
             --btn-text-color: #ffffff;     /* Цвет текста на кнопках */
-            --bg-color: #ffffff;           /* Основной фон сайта */
+            --bg-color: #333333;           /* Основной фон сайта */
             --text-color: #000000;         /* Основной цвет текста */
-            --secondary-bg: #efeff4;       /* Фон карточек и инпутов */
+            --secondary-bg: #A7A7AB;       /* Фон карточек и инпутов */
             --hint-color: #999999;         /* Цвет подсказок */
         }
 
@@ -208,7 +208,7 @@
 
             <label>Время:</label>
             <select v-model="form.time">
-                <option v-if="filteredTimeSlots.length === 0" disabled>Нет времени на сегодня</option>
+                <option v-if="filteredTimeSlots.length === 0" disabled>Сегодня мастерская закрыта - попробуйте выбрать другой день</option>
                 <option v-for="s in filteredTimeSlots" :value="s" :disabled="isSlotFull(s)">
                     {{ s }} {{ isSlotFull(s) ? '(занято)' : '' }}
                 </option>
@@ -269,7 +269,7 @@
                 return list;
             },
             filteredTimeSlots() {
-                 const slots = []; for (let h=10; h<=20; h++) slots.push(`${h}:00`, `${h}:30`);
+                 const slots = []; for (let h=9; h<=20; h++) slots.push(`${h}:00`, `${h}:30`);
                  if (this.form.date === this.serverToday) {
                     const now = new Date(); const min = now.getHours()*60+now.getMinutes();
                     return slots.filter(s => { const [h,m]=s.split(':').map(Number); return (h*60+m)>(min+30); });
@@ -308,7 +308,7 @@
             handleFileUpload(e) {
                 const file = e.target.files[0];
                 if (!file) return;
-                if (file.size > 5 * 1024 * 1024) return alert("Файл слишком большой (макс 5МБ)");
+                if (file.size > 10 * 2048 * 2048) return alert("Файл слишком большой (макс 10МБ)");
                 
                 this.form.photoName = file.name;
                 this.form.photoMime = file.type;
@@ -467,4 +467,5 @@
 
 </body>
 </html>
+
 
