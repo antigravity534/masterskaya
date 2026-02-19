@@ -3,18 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Мастерская Электротранспорта</title>
+    <title>Мастерская</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* --- НАСТРОЙКИ ЦВЕТОВ --- */
         :root {
-            --btn-bg-color: #248bed;       /* Цвет заливки кнопок */
-            --btn-text-color: #ffffff;     /* Цвет текста на кнопках */
-            --bg-color: #ffffff;           /* Основной фон сайта */
-            --text-color: #000000;         /* Основной цвет текста */
-            --secondary-bg: #efeff4;       /* Фон карточек и инпутов */
-            --hint-color: #999999;         /* Цвет подсказок */
+            --btn-bg-color: #248bed;       /* Цвет кнопок */
+            --btn-text-color: #ffffff;
+            --bg-color: #ffffff;           /* Фон */
+            --text-color: #000000;
+            --secondary-bg: #efeff4;       /* Фон полей */
+            --hint-color: #999999;
         }
 
         [v-cloak] { display: none; }
@@ -29,8 +28,8 @@
 
         h2 { margin-top: 5px; margin-bottom: 15px; }
 
-        /* Унифицированные стили для всех полей (Имя, Телефон, Селекты) */
-        input, select {
+        /* Универсальные стили для полей ввода */
+        input, select, textarea {
             width: 100%; 
             padding: 12px; 
             margin: 8px 0 16px;
@@ -42,6 +41,7 @@
             box-sizing: border-box;
             display: block;
             outline: none;
+            font-family: inherit;
         }
 
         .card { background: var(--secondary-bg); padding: 16px; border-radius: 12px; margin-bottom: 12px; }
@@ -49,13 +49,8 @@
         .btn { 
             background: var(--btn-bg-color); 
             color: var(--btn-text-color); 
-            border: none; 
-            width: 100%; 
-            padding: 14px; 
-            border-radius: 10px; 
-            font-weight: bold; 
-            cursor: pointer; 
-            margin-bottom: 10px; 
+            border: none; width: 100%; padding: 14px; 
+            border-radius: 10px; font-weight: bold; cursor: pointer; margin-bottom: 10px; 
         }
         .btn:disabled { opacity: 0.5; }
 
@@ -63,8 +58,6 @@
         
         .master-menu { display: grid; gap: 10px; }
         .status-badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 12px; color: #fff; background: #666; margin-bottom: 5px; }
-        
-        .search-input { margin-bottom: 20px; }
     </style>
 </head>
 <body>
@@ -114,16 +107,17 @@
                 <p><b>Клиент:</b> {{ work.name }}</p>
                 <p><b>Тел:</b> {{ work.phone }}</p>
                 <p><b>Услуга:</b> {{ work.service }}</p>
-                <div v-for="work in masterWorks" :key="work.id" class="card">
-                <!-- ... старый контент (ID, Имя, Статус) ... -->
                 
-                <p v-if="work.desc"><b>📝 Проблема:</b> {{ work.desc }}</p>
-                
-                <div v-if="work.photo && work.photo.startsWith('http')" style="margin-top: 10px;">
-                    <a :href="work.photo" target="_blank" style="color: var(--btn-bg-color); text-decoration: none;">
-                        🖼 Открыть фото поломки
+                <!-- Показ фото и описания мастеру -->
+                <p v-if="work.desc" style="margin-top:5px; background: rgba(0,0,0,0.05); padding: 5px; border-radius: 5px;">
+                    <b>📝 Инфо:</b> {{ work.desc }}
+                </p>
+                <div v-if="work.photo && work.photo.startsWith('http')" style="margin-top: 10px; margin-bottom: 10px;">
+                    <a :href="work.photo" target="_blank" style="color: var(--btn-bg-color); text-decoration: none; font-weight: bold;">
+                        📷 Открыть фото поломки
                     </a>
                 </div>
+
                 <hr style="border:0; border-top:1px solid #ddd; margin: 10px 0;">
                 <label>Сменить статус:</label>
                 <select v-model="work.newStatus" @change="updateStatus(work)">
@@ -138,25 +132,23 @@
 
     <!-- 2. ИНТЕРФЕЙС КЛИЕНТА -->
     <div v-else>
-        <!-- Системная кнопка для мастера, зашедшего как клиент -->
         <div v-if="isMasterUser" style="background: #333; color: #fff; padding: 10px; font-size: 12px; cursor: pointer; text-align: center; margin-bottom: 10px; border-radius: 8px;" @click="toggleClientMode">
             ⚙️ Вернуться в режим мастера
         </div>
 
-        <!-- Поиск и основное меню -->
+        <!-- Поиск и заголовки -->
         <div v-if="view !== 'details' && view !== 'check_status'">
             <h2>{{ isSearching ? 'Поиск' : (view === 'categories' ? 'Каталог' : currentCategory) }}</h2>
-            
-            <!-- Кнопка проверки (только на главном экране) -->
-            <button v-if="view === 'categories' && !isSearching" class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
+            <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу..." style="margin-bottom: 20px;">
+        </div>
+
+        <!-- Категории + Кнопка проверки -->
+        <div v-if="view === 'categories' && !isSearching">
+            <!-- КНОПКА ПРОВЕРКИ СТАТУСА (ДЛЯ КЛИЕНТА) -->
+            <button class="btn" @click="view = 'check_status'" style="background: #666; margin-bottom: 20px;">
                 🔍 Узнать статус заказа
             </button>
 
-            <input type="text" class="search-input" v-model="searchQuery" placeholder="🔍 Найти услугу...">
-        </div>
-
-        <!-- Список категорий -->
-        <div v-if="view === 'categories' && !isSearching">
             <div v-for="cat in uniqueCategories" :key="cat" class="card" @click="openCategory(cat)">
                 <strong>{{ cat }}</strong>
             </div>
@@ -173,7 +165,7 @@
             </div>
         </div>
 
-        <!-- ЭКРАН ПРОВЕРКИ СТАТУСА (ДЛЯ КЛИЕНТА) -->
+        <!-- Экран проверки статуса -->
         <div v-if="view === 'check_status'">
             <div class="back-link" @click="view = 'categories'; checkResult = null; checkId = '';">← Назад к каталогу</div>
             <h2>Проверка заказа</h2>
@@ -191,11 +183,10 @@
             </div>
         </div>
 
-        <!-- ЭКРАН ОФОРМЛЕНИЯ -->
+        <!-- Экран оформления -->
         <div v-if="view === 'details'">
             <div class="back-link" @click="view = 'services'">← Назад</div>
             <h2>{{ selectedService.name }}</h2>
-            <p style="font-size:0.9em; color:var(--hint-color)">{{ selectedService.desc }}</p>
             
             <label>День:</label>
             <select v-model="form.date">
@@ -204,7 +195,7 @@
 
             <label>Время:</label>
             <select v-model="form.time">
-                <option v-if="filteredTimeSlots.length === 0" disabled>Нет времени</option>
+                <option v-if="filteredTimeSlots.length === 0" disabled>Нет времени на сегодня</option>
                 <option v-for="s in filteredTimeSlots" :value="s" :disabled="isSlotFull(s)">
                     {{ s }} {{ isSlotFull(s) ? '(занято)' : '' }}
                 </option>
@@ -215,26 +206,20 @@
 
             <label>Телефон:</label>
             <input v-model="form.phoneDisplay" @input="handlePhoneInput" placeholder="+7...">
-                        
+
+            <!-- НОВЫЕ ПОЛЯ: Описание и Фото -->
             <label>Описание проблемы (необязательно):</label>
-            <textarea 
-                v-model="form.desc" 
-                maxlength="150" 
-                placeholder="Коротко опишите проблему..."
-                style="width: 100%; padding: 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; background: var(--secondary-bg); box-sizing: border-box; resize: none; height: 80px; font-family: sans-serif;">
-            </textarea>
-            <div style="text-align: right; font-size: 12px; color: var(--hint-color); margin-bottom: 10px;">
-                {{ form.desc.length }}/150
-            </div>
+            <textarea v-model="form.desc" maxlength="150" placeholder="Коротко опишите проблему..." style="resize: none; height: 80px;"></textarea>
+            <div style="text-align: right; font-size: 12px; color: var(--hint-color); margin-bottom: 10px;">{{ form.desc.length }}/150</div>
 
             <label>Фото поломки (необязательно):</label>
             <div style="margin-bottom: 20px;">
                 <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" style="display: none;">
                 <button class="btn" @click="$refs.fileInput.click()" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid rgba(0,0,0,0.1);">
-                    {{ form.photoName ? '📷 Файл выбран: ' + form.photoName : '📷 Прикрепить фото' }}
+                    {{ form.photoName ? '📷 Файл выбран' : '📷 Прикрепить фото' }}
                 </button>
-                <div v-if="form.photoName" style="text-align: center; color: #dc3545; font-size: 14px; cursor: pointer; margin-top: 5px;" @click="clearPhoto">
-                    ✕ Удалить фото
+                <div v-if="form.photoName" style="text-align: center; font-size: 14px; margin-top: 5px;">
+                    {{ form.photoName }} <span style="color: #dc3545; cursor: pointer; margin-left: 10px;" @click="clearPhoto">✕</span>
                 </div>
             </div>
             
@@ -253,7 +238,10 @@
                 view: 'categories', loading: true, submitting: false,
                 services: [], bookedCounts: {}, maxBookings: 1, currentCategory: '', selectedService: null,
                 searchQuery: '', sortBy: 'default', serverToday: '',
-                form: { name: '', phoneDisplay: '+7 ', time: '', date: '', service: '', desc: '', photoBase64: '', photoMime: '', photoName: '' },
+                form: { 
+                    name: '', phoneDisplay: '+7 ', time: '', date: '', service: '', 
+                    desc: '', photoBase64: '', photoMime: '', photoName: '' 
+                },
                 availableDates: [],
                 checkId: '',          
                 checkResult: null,    
@@ -289,19 +277,22 @@
                 const r = await fetch(url);
                 return await r.json();
             },
+            
             async checkOrderStatus() {
                 if (!this.checkId) return;
-                this.checkResult = null; // Сбрасываем старый результат, чтобы поле не "зависало"
+                this.checkResult = null; 
                 this.loading = true;
                 try {
                     const res = await this.apiGet({ action: 'check_status', orderId: this.checkId });
-                    console.log("Результат проверки:", res); // Для отладки в консоли
                     this.checkResult = res;
                 } catch (e) {
-                    alert("Ошибка при проверке связи с сервером");
+                    alert("Ошибка связи с сервером");
                 } finally {
                     this.loading = false;
                 }
+            },
+
+            // --- ФОТО И ФАЙЛЫ ---
             handleFileUpload(e) {
                 const file = e.target.files[0];
                 if (!file) return;
@@ -312,7 +303,6 @@
                 
                 const reader = new FileReader();
                 reader.onload = (event) => {
-                    // Убираем префикс "data:image/jpeg;base64,"
                     this.form.photoBase64 = event.target.result.split(',')[1];
                 };
                 reader.readAsDataURL(file);
@@ -321,9 +311,9 @@
                 this.form.photoBase64 = '';
                 this.form.photoName = '';
                 this.form.photoMime = '';
-                this.$refs.fileInput.value = ''; // Сброс инпута
+                this.$refs.fileInput.value = ''; 
             },
-            },
+
             async fetchData() {
                 try {
                     const uid = this.tgId;
@@ -342,7 +332,9 @@
                     this.loading = false;
                 } catch (e) { alert("Ошибка загрузки!"); }
             },
+            
             toggleClientMode() { this.isMasterMode = !this.isMasterMode; },
+
             async takeOrder() {
                 if (!this.targetId || this.targetId.length !== 3) return alert("Введите 3 цифры ID");
                 this.loading = true;
@@ -353,6 +345,7 @@
                 if (res.status === 'ok') { alert("Заказ взят!"); this.masterView = 'menu'; this.targetId = ''; }
                 else alert(res.message);
             },
+            
             async createMasterOrder() {
                 if (!this.form.name || !this.form.phoneDisplay || !this.form.service) return alert("Заполните поля");
                 const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
@@ -363,6 +356,7 @@
                 this.loading = false;
                 if (res.status === 'ok') { alert("Заказ создан и взят в работу!"); this.masterView = 'menu'; }
             },
+            
             async loadMasterWork() {
                 this.loading = true;
                 const res = await this.apiGet({ action: 'get_master_work', masterName: this.masterName });
@@ -372,20 +366,18 @@
                     this.masterView = 'current_work';
                 }
             },
+            
             async updateStatus(work) {
                 if (work.status === work.newStatus) return;
-                // Добавили masterName: this.masterName
                 const res = await this.apiGet({ 
-                    action: 'update_status', 
-                    row: work.row, 
-                    newStatus: work.newStatus,
-                    masterName: this.masterName 
+                    action: 'update_status', row: work.row, newStatus: work.newStatus, masterName: this.masterName 
                 });
                 if (res.status === 'ok') {
                     work.status = work.newStatus;
-                    if (work.newStatus === 'Готово') alert("Статус обновлен. Запись исчезнет через 5 минут.");
+                    if (work.newStatus === 'Готово') alert("Статус обновлен.");
                 }
             },
+            
             selectMasterService(s) { this.form.service = s.name; this.masterServiceSearch = ''; },
             getStatusColor(s) {
                 if (s === 'В работе') return '#007bff';
@@ -413,32 +405,41 @@
             openCategory(cat) { this.currentCategory = cat; this.view = 'services'; this.searchQuery = ''; window.scrollTo(0,0); },
             openDetails(s) { this.selectedService = s; this.view = 'details'; window.scrollTo(0,0); },
             goBack() { this.view = 'categories'; },
+            
             async submitBooking() {
-            if (!this.form.name || !this.form.phoneDisplay || !this.form.time) return alert("Заполните обязательные данные!");
-            
-            const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
-            this.submitting = true;
-            
-            try {
-                await fetch(API_URL, {
-                    method: 'POST', mode: 'no-cors',
-                    body: JSON.stringify({
-                        action: 'book',
-                        date: this.form.date, 
-                        time: this.form.time,
-                        service: this.selectedService.name, 
-                        name: this.form.name, 
-                        phone: rawPhone, 
-                        tgId: this.tgId,
-                        // Новые поля
-                        description: this.form.desc,
-                        photoBase64: this.form.photoBase64,
-                        photoMime: this.form.photoMime
-                    })
-                });
-                this.submitting = false;
-                alert("Запись создана!");
-                window.Telegram.WebApp.close();
+                if (!this.form.name || !this.form.phoneDisplay || !this.form.time) return alert("Заполните обязательные данные!");
+                
+                const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
+                this.submitting = true;
+                
+                try {
+                    await fetch(API_URL, {
+                        method: 'POST', mode: 'no-cors',
+                        body: JSON.stringify({
+                            action: 'book',
+                            date: this.form.date, 
+                            time: this.form.time,
+                            service: this.selectedService.name, 
+                            name: this.form.name, 
+                            phone: rawPhone, 
+                            tgId: this.tgId,
+                            description: this.form.desc,
+                            photoBase64: this.form.photoBase64,
+                            photoMime: this.form.photoMime
+                        })
+                    });
+                    
+                    // Обновляем локально слот
+                    if(!this.bookedCounts[this.form.date]) this.bookedCounts[this.form.date] = {};
+                    this.bookedCounts[this.form.date][this.form.time] = (this.bookedCounts[this.form.date][this.form.time]||0) + 1;
+
+                    this.submitting = false;
+                    alert("Запись создана!");
+                    window.Telegram.WebApp.close();
+                } catch(e) {
+                    alert("Ошибка отправки");
+                    this.submitting = false;
+                }
             }
         },
         mounted() {
@@ -454,6 +455,3 @@
 
 </body>
 </html>
-
-
-
