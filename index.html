@@ -114,6 +114,16 @@
                 <p><b>Клиент:</b> {{ work.name }}</p>
                 <p><b>Тел:</b> {{ work.phone }}</p>
                 <p><b>Услуга:</b> {{ work.service }}</p>
+                <div v-for="work in masterWorks" :key="work.id" class="card">
+                <!-- ... старый контент (ID, Имя, Статус) ... -->
+                
+                <p v-if="work.desc"><b>📝 Проблема:</b> {{ work.desc }}</p>
+                
+                <div v-if="work.photo && work.photo.startsWith('http')" style="margin-top: 10px;">
+                    <a :href="work.photo" target="_blank" style="color: var(--btn-bg-color); text-decoration: none;">
+                        🖼 Открыть фото поломки
+                    </a>
+                </div>
                 <hr style="border:0; border-top:1px solid #ddd; margin: 10px 0;">
                 <label>Сменить статус:</label>
                 <select v-model="work.newStatus" @change="updateStatus(work)">
@@ -205,6 +215,28 @@
 
             <label>Телефон:</label>
             <input v-model="form.phoneDisplay" @input="handlePhoneInput" placeholder="+7...">
+                        
+            <label>Описание проблемы (необязательно):</label>
+            <textarea 
+                v-model="form.desc" 
+                maxlength="150" 
+                placeholder="Коротко опишите проблему..."
+                style="width: 100%; padding: 12px; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px; background: var(--secondary-bg); box-sizing: border-box; resize: none; height: 80px; font-family: sans-serif;">
+            </textarea>
+            <div style="text-align: right; font-size: 12px; color: var(--hint-color); margin-bottom: 10px;">
+                {{ form.desc.length }}/150
+            </div>
+
+            <label>Фото поломки (необязательно):</label>
+            <div style="margin-bottom: 20px;">
+                <input type="file" ref="fileInput" @change="handleFileUpload" accept="image/*" style="display: none;">
+                <button class="btn" @click="$refs.fileInput.click()" style="background: var(--secondary-bg); color: var(--text-color); border: 1px solid rgba(0,0,0,0.1);">
+                    {{ form.photoName ? '📷 Файл выбран: ' + form.photoName : '📷 Прикрепить фото' }}
+                </button>
+                <div v-if="form.photoName" style="text-align: center; color: #dc3545; font-size: 14px; cursor: pointer; margin-top: 5px;" @click="clearPhoto">
+                    ✕ Удалить фото
+                </div>
+            </div>
             
             <button class="btn" @click="submitBooking" :disabled="submitting || !form.time">Подтвердить запись</button>
         </div>
@@ -221,7 +253,7 @@
                 view: 'categories', loading: true, submitting: false,
                 services: [], bookedCounts: {}, maxBookings: 1, currentCategory: '', selectedService: null,
                 searchQuery: '', sortBy: 'default', serverToday: '',
-                form: { name: '', phoneDisplay: '+7 ', time: '', date: '', service: '' },
+                form: { name: '', phoneDisplay: '+7 ', time: '', date: '', service: '', desc: '', photoBase64: '', photoMime: '', photoName: '' },
                 availableDates: [],
                 checkId: '',          
                 checkResult: null,    
@@ -270,6 +302,27 @@
                 } finally {
                     this.loading = false;
                 }
+            handleFileUpload(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+                if (file.size > 5 * 1024 * 1024) return alert("Файл слишком большой (макс 5МБ)");
+                
+                this.form.photoName = file.name;
+                this.form.photoMime = file.type;
+                
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    // Убираем префикс "data:image/jpeg;base64,"
+                    this.form.photoBase64 = event.target.result.split(',')[1];
+                };
+                reader.readAsDataURL(file);
+            },
+            clearPhoto() {
+                this.form.photoBase64 = '';
+                this.form.photoName = '';
+                this.form.photoMime = '';
+                this.$refs.fileInput.value = ''; // Сброс инпута
+            },
             },
             async fetchData() {
                 try {
@@ -361,13 +414,26 @@
             openDetails(s) { this.selectedService = s; this.view = 'details'; window.scrollTo(0,0); },
             goBack() { this.view = 'categories'; },
             async submitBooking() {
-                if (!this.form.name || !this.form.phoneDisplay || !this.form.time) return alert("Заполните данные!");
-                const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
-                this.submitting = true;
+            if (!this.form.name || !this.form.phoneDisplay || !this.form.time) return alert("Заполните обязательные данные!");
+            
+            const rawPhone = this.form.phoneDisplay.replace(/\D/g, '');
+            this.submitting = true;
+            
+            try {
                 await fetch(API_URL, {
                     method: 'POST', mode: 'no-cors',
                     body: JSON.stringify({
-                        action: 'book', date: this.form.date, time: this.form.time, service: this.selectedService.name, name: this.form.name, phone: rawPhone, tgId: this.tgId
+                        action: 'book',
+                        date: this.form.date, 
+                        time: this.form.time,
+                        service: this.selectedService.name, 
+                        name: this.form.name, 
+                        phone: rawPhone, 
+                        tgId: this.tgId,
+                        // Новые поля
+                        description: this.form.desc,
+                        photoBase64: this.form.photoBase64,
+                        photoMime: this.form.photoMime
                     })
                 });
                 this.submitting = false;
@@ -388,5 +454,6 @@
 
 </body>
 </html>
+
 
 
