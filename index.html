@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Мастерская Электротранспорта</title>
+    <title>Мастерская электротранспорта 5011</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
@@ -121,8 +121,11 @@
                 </p>
                 
                 <div v-if="work.photo && work.photo.startsWith('http')" style="margin-top: 10px; margin-bottom: 10px;">
-                    <a :href="work.photo" target="_blank" style="color: var(--btn-bg-color); text-decoration: none; font-weight: bold;">
-                        📷 Открыть фото поломки
+                    <!-- Показываем миниатюру -->
+                    <img :src="work.photo" style="width: 100%; max-height: 200px; object-fit: cover; border-radius: 8px; border: 1px solid #ccc;">
+                    
+                    <a :href="work.photo" target="_blank" style="display: block; margin-top: 5px; color: var(--btn-bg-color); text-decoration: none; font-weight: bold; text-align: center;">
+                        🔍 Открыть оригинал
                     </a>
                 </div>
 
@@ -464,3 +467,4 @@
 
 </body>
 </html>
+
