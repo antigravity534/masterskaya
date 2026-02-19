@@ -14,7 +14,7 @@
             --bg-color: #FEFFEE;           /* Основной фон сайта */
             --text-color: #C90415;         /* Основной цвет текста */
             --secondary-bg: #CCCCBB;       /* Фон карточек и инпутов */
-            --hint-color: #B08383;         /* Цвет подсказок */
+            --hint-color: #946B6B;         /* Цвет подсказок, цен */
         }
 
         [v-cloak] { display: none; }
@@ -81,7 +81,7 @@
             <button class="btn" @click="masterView = 'take_id'">Взять ID в работу</button>
             <button class="btn" @click="masterView = 'create_order'">Создать запись</button>
             <button class="btn" @click="loadMasterWork">Текущая работа</button>
-            <button class="btn" @click="toggleClientMode" style="background: #666;">Посмотреть каталог</button>
+            <button class="btn" @click="toggleClientMode" style="background: var(--btn-bg-color);">Посмотреть каталог</button>
         </div>
 
         <div v-if="masterView === 'take_id'">
@@ -467,6 +467,7 @@
 
 </body>
 </html>
+
 
 
 
